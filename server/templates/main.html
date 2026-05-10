@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyert</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="theme-dark" data-page="{{ page }}" {% if target_username %}data-target="{{ target_username }}"{% endif %} {% if post_id %}data-post-id="{{ post_id }}"{% endif %}>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+    <div class="topnav-inner">
+        <a href="/feed" class="nav-logo">
+            <div class="logo-g">G</div>
+            <span class="logo-text">Gyert</span>
+        </a>
+        <div class="nav-search">
+            <input type="text" id="globalSearch" placeholder="Поиск людей и постов...">
+            <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <div class="nav-actions">
+            <a href="/feed" class="nav-btn" id="navFeed" title="Лента">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+            </a>
+            <a href="/messages" class="nav-btn" id="navMsg" title="Сообщения">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                <span class="nav-badge" id="msgBadge" style="display:none"></span>
+            </a>
+            <a href="/notifications" class="nav-btn" id="navNotif" title="Уведомления">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <span class="nav-badge" id="notifBadge" style="display:none"></span>
+            </a>
+            <div class="nav-avatar-wrap" id="navAvatarWrap">
+                <div class="nav-avatar" id="navAvatar" onclick="toggleUserMenu()"></div>
+                <div class="user-menu" id="userMenu">
+                    <a href="/profile" class="umenu-item">👤 Мой профиль</a>
+                    <a href="#" class="umenu-item" onclick="app.openSettings()">⚙️ Настройки</a>
+                    <div class="umenu-divider"></div>
+                    <a href="#" class="umenu-item danger" onclick="app.logout()">🚪 Выйти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar-left" id="sidebarLeft">
+        <div class="sl-profile" id="slProfile"></div>
+        <nav class="sl-nav">
+            <a href="/feed" class="sl-link" data-page="feed">🏠 <span>Лента</span></a>
+            <a href="/messages" class="sl-link" data-page="messages">💬 <span>Сообщения</span><span class="sl-badge" id="slMsgBadge" style="display:none"></span></a>
+            <a href="/notifications" class="sl-link" data-page="notifications">🔔 <span>Уведомления</span><span class="sl-badge" id="slNotifBadge" style="display:none"></span></a>
+            <a href="/profile" class="sl-link" data-page="profile">👤 <span>Профиль</span></a>
+            <a href="/reels" class="sl-link" data-page="reels">🎬 <span>Reels</span></a>
+            <a href="/music" class="sl-link" data-page="music">🎵 <span>Музыка</span></a>
+            <a href="/ai" class="sl-link" data-page="ai">🤖 <span>GyertAI</span></a>
+            <a href="/search" class="sl-link" data-page="search">🔍 <span>Поиск</span></a>
+        </nav>
+        <div class="sl-create">
+            <button class="btn-create-post" onclick="app.openCreatePost()">✏️ Создать пост</button>
+        </div>
+        <div class="sl-theme">
+            <div class="theme-row">
+                <button class="th-btn active" data-theme="dark" title="Тёмная">🌙</button>
+                <button class="th-btn" data-theme="light" title="Светлая">☀️</button>
+                <button class="th-btn" data-theme="midnight" title="Midnight">🌌</button>
+                <button class="th-btn" data-theme="ocean" title="Ocean">🌊</button>
+                <button class="th-btn" data-theme="office" title="Офис">💼</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" id="mainContent">
+
+        <!-- STORIES BAR -->
+        <div class="stories-bar" id="storiesBar" style="display:none">
+            <div class="stories-list" id="storiesList">
+                <div class="story-add" onclick="app.openAddStory()">
+                    <div class="story-add-icon">+</div>
+                    <span>История</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DYNAMIC CONTENT -->
+        <div id="pageContent"></div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar-right" id="sidebarRight">
+        <div class="sr-block" id="srRecommended">
+            <h4 class="sr-title">Рекомендации</h4>
+            <div id="recommendedList"></div>
+        </div>
+        <div class="sr-block">
+            <h4 class="sr-title">Trending</h4>
+            <div class="trending-list">
+                <div class="trend-item">#Gyert</div>
+                <div class="trend-item">#Social</div>
+                <div class="trend-item">#NewPost</div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- STORY VIEWER -->
+<div class="story-viewer" id="storyViewer" style="display:none">
+    <div class="sv-overlay" onclick="app.closeStory()"></div>
+    <div class="sv-content">
+        <div class="sv-progress" id="svProgress"></div>
+        <div class="sv-header">
+            <div class="sv-author" id="svAuthor"></div>
+            <button class="sv-close" onclick="app.closeStory()">✕</button>
+        </div>
+        <div class="sv-media" id="svMedia"></div>
+        <div class="sv-nav">
+            <button onclick="app.prevStory()">‹</button>
+            <button onclick="app.nextStory()">›</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+    <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu" style="display:none"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

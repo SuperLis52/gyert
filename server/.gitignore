@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.db
+venv/
+instance/
+static/avatars/*.png
+static/avatars/*.jpg
+!static/avatars/default.png
+static/voice/
+static/media/
+static/posts/
+logs/
+.env

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyert — Войти</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body>
+    <div class="auth-bg">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+        <div class="blob b3"></div>
+    </div>
+    <div class="auth-wrap">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-circle">G</div>
+                <h1>Gyert</h1>
+                <p>Социальная сеть нового поколения</p>
+            </div>
+            <form id="loginForm">
+                <div class="field">
+                    <label>Юзернейм</label>
+                    <div class="field-wrap">
+                        <span class="prefix">@</span>
+                        <input type="text" id="username" placeholder="username" autocomplete="username" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Пароль</label>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn-auth">Войти</button>
+                <div class="auth-error" id="err"></div>
+            </form>
+            <div class="auth-footer">
+                Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loginForm').onsubmit = async e => {
+            e.preventDefault();
+            const err = document.getElementById('err');
+            err.textContent = '';
+            const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value})});
+            const d = await r.json();
+            if (d.success) window.location.href = '/feed';
+            else err.textContent = d.error || 'Ошибка';
+        };
+    </script>
+</body>
+</html>

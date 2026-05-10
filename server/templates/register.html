@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyert — Регистрация</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            min-height: 100vh;
+            background: #0a0a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #e0e0ff;
+            overflow-y: auto;
+        }
+        .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .3; }
+        .b1 { width: 400px; height: 400px; background: #4d7cff; top: -100px; right: -100px; }
+        .b2 { width: 350px; height: 350px; background: #ff3b6f; bottom: -80px; left: -80px; }
+        .wrap {
+            position: relative; z-index: 1;
+            max-width: 440px; margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+        .card {
+            background: rgba(16,16,36,.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(77,124,255,.12);
+            border-radius: 24px;
+            padding: 36px 32px;
+        }
+        .logo { text-align: center; margin-bottom: 28px; }
+        .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
+            border-radius: 18px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: 900; color: #fff;
+            margin-bottom: 10px;
+        }
+        .logo h1 {
+            font-size: 26px; font-weight: 800;
+            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo p { color: #666; font-size: 14px; margin-top: 2px; }
+
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block; font-size: 12px; font-weight: 700;
+            color: #8888aa; text-transform: uppercase;
+            letter-spacing: .5px; margin-bottom: 6px;
+        }
+        .field label small { color: #555; font-weight: 400; text-transform: none; }
+        .field-row { position: relative; display: flex; align-items: center; }
+        .prefix {
+            position: absolute; left: 14px;
+            color: #4d7cff; font-weight: 700; font-size: 16px;
+        }
+        .field-row input { padding-left: 32px !important; }
+        input, textarea {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px; color: #e0e0ff;
+            font-size: 15px; outline: none;
+            transition: border-color .3s, box-shadow .3s;
+            font-family: inherit;
+        }
+        input:focus { border-color: #4d7cff; box-shadow: 0 0 16px rgba(77,124,255,.2); }
+        input::placeholder { color: rgba(255,255,255,.2); }
+
+        /* Avatar section */
+        .ava-preview {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 4px; margin-bottom: 8px;
+        }
+        .ava-circle {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: linear-gradient(135deg, rgba(77,124,255,.15), rgba(255,59,111,.1));
+            border: 3px solid #4d7cff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 0 20px rgba(77,124,255,.25);
+            transition: all .3s;
+        }
+        .ava-label { font-size: 11px; color: #555; }
+        .emoji-box {
+            background: rgba(255,255,255,.02);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 14px; padding: 10px;
+        }
+        .emoji-grid {
+            max-height: 140px; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+        }
+        .emoji-grid::-webkit-scrollbar { width: 4px; }
+        .emoji-grid::-webkit-scrollbar-thumb { background: rgba(77,124,255,.25); border-radius: 2px; }
+        .ep {
+            aspect-ratio: 1; font-size: 24px;
+            background: rgba(255,255,255,.03);
+            border: 2px solid rgba(255,255,255,.06);
+            border-radius: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .15s;
+        }
+        .ep:hover { border-color: #4d7cff; transform: scale(1.08); }
+        .ep.sel {
+            border-color: #4d7cff;
+            background: rgba(77,124,255,.18);
+            box-shadow: 0 0 12px rgba(77,124,255,.35);
+        }
+        .hint { text-align: center; font-size: 10px; color: #444; margin-top: 4px; }
+
+        /* Password strength */
+        .pw-bar { height: 3px; border-radius: 2px; margin-top: 5px; transition: all .3s; }
+        .pw-w { width: 33%; background: #ff3b3b; }
+        .pw-m { width: 66%; background: #ffaa00; }
+        .pw-s { width: 100%; background: #00cc44; }
+
+        .btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
+            border: none; border-radius: 12px;
+            color: #fff; font-size: 16px; font-weight: 700;
+            cursor: pointer; margin-top: 8px;
+            transition: all .3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(77,124,255,.35); }
+        .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        .err { color: #ff3b6f; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+        .footer {
+            text-align: center; margin-top: 20px;
+            padding-top: 16px; border-top: 1px solid rgba(255,255,255,.05);
+            color: #555; font-size: 14px;
+        }
+        .footer a { color: #4d7cff; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="bg"><div class="blob b1"></div><div class="blob b2"></div></div>
+    <div class="wrap">
+        <div class="card">
+            <div class="logo">
+                <div class="logo-icon">G</div>
+                <h1>Gyert</h1>
+                <p>Создайте аккаунт</p>
+            </div>
+            <form id="f">
+                <div class="field">
+                    <label>Аватар</label>
+                    <div class="ava-preview">
+                        <div class="ava-circle" id="prev">😊</div>
+                        <span class="ava-label">Нажмите на эмодзи ниже</span>
+                    </div>
+                    <div class="emoji-box">
+                        <div class="emoji-grid" id="grid"></div>
+                        <div class="hint">↕ прокрутите</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Имя</label>
+                    <input type="text" id="dn" placeholder="Как вас зовут?" required>
+                </div>
+                <div class="field">
+                    <label>Юзернейм</label>
+                    <div class="field-row">
+                        <span class="prefix">@</span>
+                        <input type="text" id="un" placeholder="username" required pattern="[a-zA-Z0-9_]{3,}">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Телефон <small>(необязательно)</small></label>
+                    <input type="tel" id="ph" placeholder="+7 999 123 45 67">
+                </div>
+                <div class="field">
+                    <label>Пароль</label>
+                    <input type="password" id="pw" placeholder="Минимум 6 символов" required minlength="6" oninput="pwStr(this.value)">
+                    <div class="pw-bar" id="pwb"></div>
+                </div>
+                <div class="field">
+                    <label>Повторите пароль</label>
+                    <input type="password" id="pw2" placeholder="Ещё раз" required>
+                </div>
+                <button type="submit" class="btn" id="sub">Зарегистрироваться</button>
+                <div class="err" id="err"></div>
+            </form>
+            <div class="footer">Уже есть аккаунт? <a href="/login">Войти</a></div>
+        </div>
+    </div>
+    <script>
+        const E=['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😇','🥰','😍','🤩','😘','😋','😛','🤪','🤓','😎','🥳','😤','🤗','🤔','🤫','🤭','😶','😏','😌','😴','🤯','🥺','😈','👻','💀','🤖','👽','🦊','🐱','🐶','🐻','🐼','🐨','🦁','🐯','🐸','🐵','🦋','🐢','🦄','🌸','🌺','🍀','🔥','⚡','🌈','💎','🚀','🎸','🎵'];
+        let sel='😊';
+        const g=document.getElementById('grid');
+        E.forEach(e=>{
+            const b=document.createElement('button');
+            b.type='button'; b.className='ep'+(e===sel?' sel':''); b.textContent=e;
+            b.onclick=()=>{
+                sel=e; document.getElementById('prev').textContent=e;
+                g.querySelectorAll('.ep').forEach(x=>x.classList.remove('sel'));
+                b.classList.add('sel');
+            };
+            g.appendChild(b);
+        });
+        function pwStr(v){
+            const b=document.getElementById('pwb');
+            if(v.length<6) b.className='pw-bar pw-w';
+            else if(v.length<10||!/[A-Z]/.test(v)||!/[0-9]/.test(v)) b.className='pw-bar pw-m';
+            else b.className='pw-bar pw-s';
+        }
+        document.getElementById('f').onsubmit=async e=>{
+            e.preventDefault();
+            const err=document.getElementById('err'); err.textContent='';
+            const pw=document.getElementById('pw').value;
+            if(pw!==document.getElementById('pw2').value){err.textContent='Пароли не совпадают';return;}
+            const sub=document.getElementById('sub'); sub.disabled=true; sub.textContent='...';
+            try{
+                const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({username:document.getElementById('un').value, display_name:document.getElementById('dn').value,
+                        password:pw, phone:document.getElementById('ph').value, avatar_emoji:sel})});
+                const d=await r.json();
+                if(d.success) window.location.href='/feed';
+                else{err.textContent=d.error||'Ошибка'; sub.disabled=false; sub.textContent='Зарегистрироваться';}
+            }catch(x){err.textContent='Ошибка соединения'; sub.disabled=false; sub.textContent='Зарегистрироваться';}
+        };
+    </script>
+</body>
+</html>
