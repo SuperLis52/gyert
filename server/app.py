@@ -838,6 +838,8 @@ def api_ai_chat():
 
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8', errors='ignore')
+        if e.code == 402:
+            return jsonify({'response': 'Недостаточно средств на балансе DeepSeek API. Пополните баланс на platform.deepseek.com', 'model': 'error'})
         return jsonify({'response': f'Ошибка API: {e.code}', 'model': 'error'})
     except Exception as e:
         return jsonify({'response': f'Ошибка: {str(e)}', 'model': 'error'})
@@ -969,7 +971,6 @@ if __name__ == '__main__':
             open(dap,'wb').write(mp(64,64,0,200,180))
     with app.app_context():
         db.create_all()
-        create_demo()
         create_nft_codes()
         create_stickers()
     print('\n'+'='*50+'\n  GYERT SOCIAL NETWORK\n  http://localhost:5000\n'+'='*50+'\n')
