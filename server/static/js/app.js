@@ -34,6 +34,8 @@ class GyertApp{
         this.updateNavAvatar();
         this.renderSidebar();
         this.highlightNav();
+        // Mobile nav highlight
+        document.querySelectorAll('.mn-btn').forEach(b=>{const p=b.href.split('/').pop();b.classList.toggle('active',this.page===p||(this.page==='feed'&&p==='feed'))});
 
         // Load current page content
         await this.loadCurrentPage();
@@ -271,11 +273,14 @@ class GyertApp{
 
     async openChat(cid){
         this.currentChatId=cid;
+        // Mobile: show chat panel as fullscreen overlay
+        const panel=document.getElementById('chatViewPanel');
+        if(panel)panel.classList.add('open');
         const chat=this.chats.find(c=>c.id===cid);if(!chat)return;
         this.replyingTo=null;this.editingMsgId=null;
         const panel=document.getElementById('chatViewPanel');if(!panel)return;
         const name=chat.name||'Chat';const ava=this.avatarHtml(chat.other_user?.avatar||chat.avatar,40);const online=chat.other_user?.is_online;
-        panel.innerHTML='<div class="cvp-header"><div class="cvp-avatar">'+ava+'</div><div class="cvp-info"><h4>'+this.esc(name)+'</h4><div class="cvp-status '+(online?'online':'')+'" id="cvpStatus">'+(online?t('online'):'')+'</div></div></div><div class="messages-list" id="msgList"></div><div class="msg-input-area" id="msgInputArea"><div class="msg-input-row"><button class="msg-btn" onclick="document.getElementById(\'msgFile\').click()">📎</button><input type="file" id="msgFile" style="display:none" onchange="app.sendMediaMsg(this)"><textarea class="msg-input" id="msgInput" placeholder="Сообщение..." rows="1" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();app.sendMsg()}" oninput="app.emitTyping()"></textarea><button class="msg-send" onclick="app.sendMsg()"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button></div></div>';
+        panel.innerHTML='<div class="cvp-header"><button class="cvp-back" onclick="document.getElementById(\'chatViewPanel\').classList.remove(\'open\');app.currentChatId=null">←</button><div class="cvp-avatar">'+ava+'</div><div class="cvp-info"><h4>'+this.esc(name)+'</h4><div class="cvp-status '+(online?'online':'')+'" id="cvpStatus">'+(online?t('online'):'')+'</div></div></div><div class="messages-list" id="msgList"></div><div class="msg-input-area" id="msgInputArea"><div class="msg-input-row"><button class="msg-btn" onclick="document.getElementById(\'msgFile\').click()">📎</button><input type="file" id="msgFile" style="display:none" onchange="app.sendMediaMsg(this)"><textarea class="msg-input" id="msgInput" placeholder="Сообщение..." rows="1" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();app.sendMsg()}" oninput="app.emitTyping()"></textarea><button class="msg-send" onclick="app.sendMsg()"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button></div></div>';
 
         const r=await fetch('/api/chats/'+cid+'/messages');const d=await r.json();
         const list=document.getElementById('msgList');if(!list)return;
@@ -348,7 +353,7 @@ class GyertApp{
             return '<a class="notif-item '+(n.is_read?'':'unread')+'" href="'+(n.link||'#')+'">'+ava+'<div class="notif-text"><strong>'+this.esc(u?.display_name||'')+'</strong> '+this.esc(n.text||'')+'<div class="notif-time">'+this.fmtTime(n.created_at)+'</div></div><div class="notif-icon">'+(icons[n.type]||'🔔')+'</div></a>'}).join('')}
 
     async updateBadges(){const r=await fetch('/api/notifications/count');const d=await r.json();const c=d.count||0;
-        ['notifBadge','slNotifBadge'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display=c>0?'flex':'none';el.textContent=c}});
+        ['notifBadge','slNotifBadge','mnNotifBadge'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display=c>0?'flex':'none';el.textContent=c}});
         document.title=c>0?'('+c+') Gyert':'Gyert'}
 
     // ─── PROFILE ──────────────────────────────────────────────
@@ -385,7 +390,23 @@ class GyertApp{
     // ─── AI ───────────────────────────────────────────────────
     renderAIPage(){return'<div class="ai-page"><div class="ai-header"><div class="ai-logo" style="font-size:56px;animation:float 3s ease-in-out infinite">🤖</div><h2 style="font-size:24px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">GyertAI</h2><p style="color:var(--text2)">Умный помощник</p></div><div class="ai-chat" id="aiChat" style="flex:1;overflow-y:auto;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:20px;margin:12px 0;display:flex;flex-direction:column;gap:12px"><div class="ai-msg ai-bot" style="display:flex;gap:10px;max-width:85%"><div style="font-size:24px">🤖</div><div style="padding:12px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:18px;font-size:14px;line-height:1.6">Привет! Я GyertAI. Скоро я смогу отвечать на любые вопросы!</div></div></div><div style="display:flex;gap:10px"><input type="text" class="ai-input" id="aiInput" placeholder="Спросите..." style="flex:1;padding:12px 18px;background:var(--bg4);border:1px solid var(--border);border-radius:24px;color:var(--text);font-size:15px;outline:none" onkeydown="if(event.key===\'Enter\')app.sendAI()"><button class="msg-send" onclick="app.sendAI()">→</button></div><p style="text-align:center;font-size:12px;color:var(--text3);margin-top:8px">⚠️ AI в разработке</p></div>'}
 
-    sendAI(){const inp=document.getElementById('aiInput');const chat=document.getElementById('aiChat');if(!inp||!chat)return;const q=inp.value.trim();if(!q)return;inp.value='';chat.innerHTML+='<div style="display:flex;gap:10px;max-width:85%;align-self:flex-end;flex-direction:row-reverse"><div style="font-size:16px">'+this.avatarHtml(this.me.avatar,32)+'</div><div style="padding:12px 16px;background:linear-gradient(135deg,rgba(77,124,255,.2),rgba(255,59,111,.12));border:1px solid rgba(77,124,255,.15);border-radius:18px;font-size:14px">'+this.esc(q)+'</div></div>';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{const responses=['Интересный вопрос! AI скоро заработает на полную.','GyertAI в разработке — скоро подключим ChatGPT!','Хороший вопрос! Полноценные ответы будут после подключения API.'];chat.innerHTML+='<div style="display:flex;gap:10px;max-width:85%"><div style="font-size:24px">🤖</div><div style="padding:12px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:18px;font-size:14px;line-height:1.6">'+responses[Math.floor(Math.random()*responses.length)]+'</div></div>';chat.scrollTop=chat.scrollHeight},1200)}
+    async sendAI(){const inp=document.getElementById('aiInput');const chat=document.getElementById('aiChat');if(!inp||!chat)return;const q=inp.value.trim();if(!q)return;inp.value='';
+        chat.innerHTML+='<div style="display:flex;gap:10px;max-width:85%;align-self:flex-end;flex-direction:row-reverse"><div style="font-size:16px">'+this.avatarHtml(this.me.avatar,32)+'</div><div style="padding:12px 16px;background:linear-gradient(135deg,rgba(77,124,255,.2),rgba(255,59,111,.12));border:1px solid rgba(77,124,255,.15);border-radius:18px;font-size:14px">'+this.esc(q)+'</div></div>';
+        chat.scrollTop=chat.scrollHeight;
+        // Thinking indicator
+        const thinkId='think_'+Date.now();
+        chat.innerHTML+='<div style="display:flex;gap:10px;max-width:85%" id="'+thinkId+'"><div style="font-size:24px">🤖</div><div style="padding:12px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:18px;font-size:14px"><span class="typing-ind"><span></span><span></span><span></span></span></div></div>';
+        chat.scrollTop=chat.scrollHeight;
+        try{
+            const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});
+            const d=await r.json();
+            const el=document.getElementById(thinkId);
+            if(el){const bubble=el.querySelector('div:last-child');if(bubble){bubble.innerHTML=this.renderText(d.response||'Нет ответа');if(d.model&&d.model!=='demo')bubble.innerHTML+='<div style="font-size:10px;color:var(--text3);margin-top:6px">🤖 '+d.model+'</div>'}}
+            chat.scrollTop=chat.scrollHeight;
+        }catch(e){
+            const el=document.getElementById(thinkId);
+            if(el){const bubble=el.querySelector('div:last-child');if(bubble)bubble.textContent='Ошибка соединения'}
+        }}
 
     // ─── RECOMMENDED ──────────────────────────────────────────
     async loadRecommended(){const el=document.getElementById('recommendedList');if(!el)return;const r=await fetch('/api/users/recommended');const users=await r.json();el.innerHTML=users.map(u=>'<div class="rec-item">'+this.avatarHtml(u.avatar,40)+'<div class="rec-info"><a class="rec-name" href="/profile/'+u.username+'">'+this.esc(u.display_name)+'</a><div class="rec-username">@'+this.esc(u.username)+'</div></div><button class="btn-follow" id="rfBtn_'+u.id+'" onclick="app.toggleFollow('+u.id+')">'+t('follow')+'</button></div>').join('')}

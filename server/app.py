@@ -208,11 +208,15 @@ def api_register():
         return jsonify({'error':'Пароль мин 6 символов'}), 400
     if User.query.filter_by(username=u).first():
         return jsonify({'error':'Юзернейм занят'}), 400
+    email = d.get('email', '').strip().lower()
+    if email and User.query.filter_by(email=email).first():
+        return jsonify({'error': 'Эта почта уже используется'}), 400
     phone_clean = ''.join(c for c in phone if c.isdigit() or c == '+') if phone else None
     user = User(username=u, display_name=dn,
                 password_hash=generate_password_hash(pw, method='scrypt'),
                 avatar='emoji:' + emoji,
-                phone_number=phone_clean if phone_clean and len(phone_clean) >= 7 else None)
+                phone_number=phone_clean if phone_clean and len(phone_clean) >= 7 else None,
+                email=email if email and '@' in email else None)
     db.session.add(user)
     db.session.commit()
     login_user(user, remember=True)
@@ -225,7 +229,10 @@ def api_login():
     pw = d.get('password','')
     if not u or not pw:
         return jsonify({'error':'Введите данные'}), 400
+    # Try login by email or username
     user = User.query.filter_by(username=u).first()
+    if not user and '@' in u:
+        user = User.query.filter_by(email=u).first()
     if not user or not check_password_hash(user.password_hash, pw):
         return jsonify({'error':'Неверный логин или пароль'}), 401
     login_user(user, remember=True)
@@ -757,6 +764,64 @@ def api_my_nfts():
 @login_required
 def api_stickers():
     return jsonify([p.to_dict() for p in StickerPack.query.all()])
+
+
+# ============================================================
+# DEEPSEEK AI API
+# ============================================================
+
+@app.route('/api/ai/chat', methods=['POST'])
+@login_required
+def api_ai_chat():
+    import urllib.request
+    import urllib.error
+
+    data = request.get_json() or {}
+    message = data.get('message', '').strip()
+    if not message:
+        return jsonify({'error': 'Empty message'}), 400
+
+    api_key = os.environ.get('DEEPSEEK_API_KEY', '')
+    if not api_key:
+        # Fallback responses when no API key
+        fallback = [
+            'GyertAI пока работает в демо-режиме. Подключите DEEPSEEK_API_KEY для полноценных ответов.',
+            'Интересный вопрос! Для умных ответов нужно добавить API ключ DeepSeek в настройки сервера.',
+            'Я GyertAI! Скоро смогу отвечать на любые вопросы. Ждём подключения DeepSeek API.',
+        ]
+        import random
+        return jsonify({'response': random.choice(fallback), 'model': 'demo'})
+
+    try:
+        payload = json.dumps({
+            'model': 'deepseek-chat',
+            'messages': [
+                {'role': 'system', 'content': 'You are GyertAI, a helpful assistant in Gyert social network. Answer in the same language as the user message. Be concise and friendly.'},
+                {'role': 'user', 'content': message}
+            ],
+            'max_tokens': 1000,
+            'temperature': 0.7
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            'https://api.deepseek.com/chat/completions',
+            data=payload,
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {api_key}'
+            }
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
+            return jsonify({'response': ai_response, 'model': 'deepseek-chat'})
+
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8', errors='ignore')
+        return jsonify({'response': f'Ошибка API: {e.code}', 'model': 'error'})
+    except Exception as e:
+        return jsonify({'response': f'Ошибка: {str(e)}', 'model': 'error'})
 
 # ============================================================
 # SOCKET.IO

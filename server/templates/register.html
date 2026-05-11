@@ -163,6 +163,10 @@
                     <input type="text" id="dn" placeholder="Как вас зовут?" required>
                 </div>
                 <div class="field">
+                    <label>Email <small>(необязательно)</small></label>
+                    <input type="email" id="email" placeholder="example@mail.com" autocomplete="email">
+                </div>
+                <div class="field">
                     <label>Юзернейм</label>
                     <div class="field-row">
                         <span class="prefix">@</span>
@@ -217,7 +221,7 @@
             try{
                 const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({username:document.getElementById('un').value, display_name:document.getElementById('dn').value,
-                        password:pw, phone:document.getElementById('ph').value, avatar_emoji:sel})});
+                        password:pw, phone:document.getElementById('ph').value, email:document.getElementById('email')?.value||'', avatar_emoji:sel})});
                 const d=await r.json();
                 if(d.success) window.location.href='/feed';
                 else{err.textContent=d.error||'Ошибка'; sub.disabled=false; sub.textContent='Зарегистрироваться';}
