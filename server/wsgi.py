@@ -1,5 +1,5 @@
 import os
-from app import app, db, socketio, create_nft_codes, create_stickers
+from app import app, db, socketio, create_nft_codes, create_stickers, create_demo
 
 for folder in [
     app.config['UPLOAD_FOLDER'],
@@ -22,6 +22,7 @@ if not os.path.exists(dap):
 
 with app.app_context():
     db.create_all()
+    create_demo()
     create_nft_codes()
     create_stickers()
 

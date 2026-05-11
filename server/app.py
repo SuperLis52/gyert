@@ -52,6 +52,25 @@ def notify_chat_members(chat, exclude=None):
             if sid:
                 socketio.emit('chat_created', {'chat_id': chat.id}, room=sid)
 
+
+def create_demo():
+    if User.query.count() > 0:
+        return
+    from werkzeug.security import generate_password_hash
+    demos = [
+        ('alexey', 'Alexey', 'qaz12wsx', 'alexey@gyert.com', '+79608253884'),
+        ('polina', 'Polina', 'SDR56tgh', 'polina@gyert.com', '+79379805880'),
+        ('elizaveta', 'Elizaveta', 'lisaeliza', 'liza@gyert.com', '+79874475289'),
+        ('razrab', 'Elisey', 'qaz10okm', 'elisey@gyert.com', '+79033093388'),
+        ('razrab2', 'Nikita', 'nicN', 'nikita@gyert.com', '+79093442766'),
+    ]
+    for u, d, p, e, ph in demos:
+        user = User(username=u, display_name=d,
+                    password_hash=generate_password_hash(p, method='scrypt'),
+                    email=e, phone_number=ph, avatar='emoji:' + ['😎','🥰','🤩','🦊','🐱'][demos.index((u,d,p,e,ph))])
+        db.session.add(user)
+    db.session.commit()
+    print('Demo users created')
 def create_nft_codes():
     if NftCode.query.count() > 0:
         return
@@ -950,6 +969,7 @@ if __name__ == '__main__':
             open(dap,'wb').write(mp(64,64,0,200,180))
     with app.app_context():
         db.create_all()
+        create_demo()
         create_nft_codes()
         create_stickers()
     print('\n'+'='*50+'\n  GYERT SOCIAL NETWORK\n  http://localhost:5000\n'+'='*50+'\n')
