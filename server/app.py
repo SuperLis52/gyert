@@ -800,49 +800,44 @@ def api_ai_chat():
     if not message:
         return jsonify({'error': 'Empty message'}), 400
 
-    api_key = os.environ.get('DEEPSEEK_API_KEY', '')
+    api_key = os.environ.get('GEMINI_API_KEY', '')
+
     if not api_key:
-        # Fallback responses when no API key
-        fallback = [
-            'GyertAI пока работает в демо-режиме. Подключите DEEPSEEK_API_KEY для полноценных ответов.',
-            'Интересный вопрос! Для умных ответов нужно добавить API ключ DeepSeek в настройки сервера.',
-            'Я GyertAI! Скоро смогу отвечать на любые вопросы. Ждём подключения DeepSeek API.',
-        ]
-        import random
-        return jsonify({'response': random.choice(fallback), 'model': 'demo'})
+        return jsonify({'response': 'API ключ не настроен. Добавьте GEMINI_API_KEY в переменные окружения.', 'model': 'demo'})
 
     try:
+        url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + api_key
+
         payload = json.dumps({
-            'model': 'deepseek-chat',
-            'messages': [
-                {'role': 'system', 'content': 'You are GyertAI, a helpful assistant in Gyert social network. Answer in the same language as the user message. Be concise and friendly.'},
-                {'role': 'user', 'content': message}
-            ],
-            'max_tokens': 1000,
-            'temperature': 0.7
+            'contents': [{
+                'parts': [{'text': 'You are GyertAI, a helpful assistant. Answer in the same language as the user. Be concise and friendly.\n\nUser: ' + message}]
+            }],
+            'generationConfig': {
+                'maxOutputTokens': 1000,
+                'temperature': 0.7
+            }
         }).encode('utf-8')
 
-        req = urllib.request.Request(
-            'https://api.deepseek.com/chat/completions',
-            data=payload,
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}'
-            }
-        )
+        req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
 
         with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode('utf-8'))
-            ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
-            return jsonify({'response': ai_response, 'model': 'deepseek-chat'})
+            candidates = result.get('candidates', [])
+            if candidates:
+                parts = candidates[0].get('content', {}).get('parts', [])
+                if parts:
+                    return jsonify({'response': parts[0].get('text', 'Нет ответа'), 'model': 'Gemini'})
+            return jsonify({'response': 'Нет ответа от модели', 'model': 'error'})
 
     except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8', errors='ignore')
-        if e.code == 402:
-            return jsonify({'response': 'Недостаточно средств на балансе DeepSeek API. Пополните баланс на platform.deepseek.com', 'model': 'error'})
-        return jsonify({'response': f'Ошибка API: {e.code}', 'model': 'error'})
+        body = e.read().decode('utf-8', errors='ignore')
+        if e.code == 429:
+            return jsonify({'response': 'Слишком много запросов. Подождите минуту.', 'model': 'error'})
+        elif e.code == 403:
+            return jsonify({'response': 'Неверный API ключ.', 'model': 'error'})
+        return jsonify({'response': 'Ошибка API: ' + str(e.code), 'model': 'error'})
     except Exception as e:
-        return jsonify({'response': f'Ошибка: {str(e)}', 'model': 'error'})
+        return jsonify({'response': 'Ошибка: ' + str(e), 'model': 'error'})
 
 # ============================================================
 # SOCKET.IO
