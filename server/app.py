@@ -220,6 +220,11 @@ def post_page(post_id):
     return render_template('main.html', page='post', post_id=post_id)
 
 
+@app.route('/verify-email')
+@login_required
+def verify_email_page():
+    return render_template('verify_email.html')
+
 @app.route('/register-tg')
 def register_tg_page():
     return render_template('register_tg.html')
@@ -282,18 +287,26 @@ def api_register():
     if User.query.filter_by(username=u).first():
         return jsonify({'error':'Юзернейм занят'}), 400
     email = d.get('email', '').strip().lower()
-    if email and User.query.filter_by(email=email).first():
+    if not email or '@' not in email or '.' not in email:
+        return jsonify({'error': 'Введите корректный email'}), 400
+    if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Эта почта уже используется'}), 400
     phone_clean = ''.join(c for c in phone if c.isdigit() or c == '+') if phone else None
     user = User(username=u, display_name=dn,
                 password_hash=generate_password_hash(pw, method='scrypt'),
                 avatar='emoji:' + emoji,
                 phone_number=phone_clean if phone_clean and len(phone_clean) >= 7 else None,
-                email=email if email and '@' in email else None)
+                email=email,
+                email_verified=False,
+                email_verify_code=verify_code,
+                email_verify_expires=datetime.utcnow() + timedelta(hours=24))
     db.session.add(user)
     db.session.commit()
     login_user(user, remember=True)
-    return jsonify({'success': True, 'user': user.to_dict()})
+    # Send verification email
+    body = f'<p>Привет, <strong>{display_name}</strong>!</p><p>Спасибо за регистрацию в Gyert!</p><p>Ваш код подтверждения email:</p><div style="text-align:center;margin:24px 0"><div style="display:inline-block;background:#f0f4ff;border:2px solid #2563EB;border-radius:12px;padding:16px 32px;font-size:32px;font-weight:bold;color:#2563EB;letter-spacing:8px;font-family:monospace">{verify_code}</div></div><p>Код действителен 24 часа.</p>'
+    send_email(email, 'Добро пожаловать в Gyert!', body)
+    return jsonify({'success': True, 'user': user.to_dict(), 'verify_required': True})
 
 @app.route('/api/login', methods=['POST'])
 def api_login():

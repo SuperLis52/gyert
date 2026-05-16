@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gyert</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <meta name="theme-color" content="#2563EB">
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="manifest" href="/static/manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 </head>
-<body class="theme-dark" data-page="{{ page }}" {% if target_username %}data-target="{{ target_username }}"{% endif %} {% if post_id %}data-post-id="{{ post_id }}"{% endif %}>
+<body class="theme-light" data-page="{{ page }}" {% if target_username %}data-target="{{ target_username }}"{% endif %} {% if post_id %}data-post-id="{{ post_id }}"{% endif %}>
 
 <!-- TOP NAV -->
 <nav class="topnav">
@@ -78,6 +81,7 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content" id="mainContent">
+        <div class="verify-banner" id="verifyBanner" style="display:none">📧 Подтвердите email чтобы получить все возможности <button class="verify-banner-btn" onclick="window.location.href='/verify-email'">Подтвердить</button></div>
 
         <!-- STORIES BAR -->
         <div class="stories-bar" id="storiesBar" style="display:none">

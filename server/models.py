@@ -22,6 +22,9 @@ class User(UserMixin, db.Model):
     display_name = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verify_code = db.Column(db.String(10), nullable=True)
+    email_verify_expires = db.Column(db.DateTime, nullable=True)
     avatar = db.Column(db.String(256), default='default.png')
     bio = db.Column(db.Text, default='')
     phone_number = db.Column(db.String(20), nullable=True)
@@ -79,6 +82,7 @@ class User(UserMixin, db.Model):
             'id': self.id, 'username': self.username, 'display_name': self.display_name,
             'avatar': self.avatar, 'bio': self.bio or '', 'phone_number': self.phone_number,
             'email': self.email,
+            'email_verified': self.email_verified,
             'theme': self.theme, 'accent_color': self.accent_color, 'language': self.language,
             'last_seen': self.last_seen.isoformat() if self.last_seen else None,
             'is_online': self.is_online, 'created_at': self.created_at.isoformat(),

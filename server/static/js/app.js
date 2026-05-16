@@ -13,10 +13,11 @@ class App{
 
     async init(){
         try{const r=await fetch('/api/me');if(!r.ok)throw 0;this.me=await r.json()}catch(e){location.href='/login';return}
-        this.applyTheme(this.me.theme||'dark');
+        this.applyTheme(this.me.theme||'light');
         this.socket=io();
         this.setupSocket();
         this.updateNav();
+        if(this.me.email && !this.me.email_verified){const b=document.getElementById('verifyBanner');if(b)b.style.display='flex'}
         this.renderSidebar();
         await this.loadPage();
         this.loadRecommended();
@@ -247,7 +248,8 @@ class App{
 
     editProf(){this.openModal('<div class="modal-header"><h2>'+t('edit_profile')+'</h2><button class="modal-close" onclick="app.closeModal()">✕</button></div><div class="modal-body"><div class="field"><label>Имя</label><input type="text" id="epN" value="'+this.esc(this.me.display_name||'')+'"></div><div class="field"><label>О себе</label><textarea id="epB" rows="3">'+this.esc(this.me.bio||'')+'</textarea></div><div class="field"><label>Город</label><input type="text" id="epL" value="'+this.esc(this.me.location||'')+'"></div><div class="field"><label>Сайт</label><input type="url" id="epW" value="'+this.esc(this.me.website||'')+'"></div></div><div class="modal-footer"><button class="btn-primary" onclick="app.saveProf()">'+t('save')+'</button></div>')}
 
-    async saveProf(){const d={display_name:document.getElementById('epN')?.value,bio:document.getElementById('epB')?.value,location:document.getElementById('epL')?.value,website:document.getElementById('epW')?.value};const r=await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const res=await r.json();if(res.success){this.me=res.user;this.updateNav();this.renderSidebar();this.closeModal();this.toast('✅')}}
+    async saveProf(){const d={display_name:document.getElementById('epN')?.value,bio:document.getElementById('epB')?.value,location:document.getElementById('epL')?.value,website:document.getElementById('epW')?.value};const r=await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const res=await r.json();if(res.success){this.me=res.user;this.updateNav();
+        if(this.me.email && !this.me.email_verified){const b=document.getElementById('verifyBanner');if(b)b.style.display='flex'}this.renderSidebar();this.closeModal();this.toast('✅')}}
 
     // ══════ SEARCH ══════
     async searchP(q){if(q.length<2){document.getElementById('spRes').innerHTML='';return}const r=await fetch('/api/users/search?q='+encodeURIComponent(q));const u=await r.json();document.getElementById('spRes').innerHTML=u.map(x=>'<a class="search-user-item" href="/profile/'+x.username+'">'+this.ava(x.avatar,44)+'<div style="flex:1"><div style="font-weight:700">'+this.esc(x.display_name)+'</div><div style="color:var(--acc);font-size:13px">@'+this.esc(x.username)+'</div></div></a>').join('')}
@@ -274,7 +276,8 @@ class App{
     // ══════ NFT ══════
     showNftInfo(nft){if(!nft)return;this.openModal('<div class="modal-body" style="text-align:center;padding:32px"><div style="font-size:80px;margin-bottom:16px">'+nft.emoji+'</div><h2>'+this.esc(nft.name)+'</h2><div style="font-size:24px;font-weight:800;color:var(--acc);margin:8px 0">'+this.esc(nft.price)+'</div><div style="font-size:13px;color:var(--text2)">'+this.esc(nft.index)+'</div></div>')}
 
-    async activateNft(){const code=document.getElementById('nftInp')?.value?.trim();if(!code)return;const r=await fetch('/api/nft/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});const d=await r.json();if(d.success){this.toast('✅ NFT: '+d.nft?.nft_emoji);const mr=await fetch('/api/me');this.me=await mr.json();this.updateNav();this.renderSidebar()}else this.toast('❌ '+(d.error||'Ошибка'))}
+    async activateNft(){const code=document.getElementById('nftInp')?.value?.trim();if(!code)return;const r=await fetch('/api/nft/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});const d=await r.json();if(d.success){this.toast('✅ NFT: '+d.nft?.nft_emoji);const mr=await fetch('/api/me');this.me=await mr.json();this.updateNav();
+        if(this.me.email && !this.me.email_verified){const b=document.getElementById('verifyBanner');if(b)b.style.display='flex'}this.renderSidebar()}else this.toast('❌ '+(d.error||'Ошибка'))}
 
     // ══════ SETTINGS ══════
     openSettings(){document.getElementById('userMenu').classList.remove('open');
