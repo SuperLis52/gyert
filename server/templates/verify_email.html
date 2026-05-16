@@ -5,64 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Подтверждение email — Gyert</title>
     <link rel="icon" type="image/png" href="/static/favicon.png">
-    <link rel="stylesheet" href="/static/css/auth.css">
+    <meta name="theme-color" content="#2563EB">
     <style>
-        .code-input { font-size: 28px !important; text-align: center; letter-spacing: 12px; font-family: monospace; padding: 14px !important; }
-        .email-info { background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 14px; color: #444; text-align: center; }
-        .email-info strong { color: #2563EB; }
-        .resend { text-align: center; margin-top: 12px; font-size: 13px; color: #888; }
-        .resend a { color: #2563EB; cursor: pointer; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1a202c;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .12; }
+        .b1 { width: 400px; height: 400px; background: #2563EB; top: -100px; right: -100px; }
+        .b2 { width: 350px; height: 350px; background: #60A5FA; bottom: -80px; left: -80px; }
+        .wrap { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 20px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 24px; padding: 36px 32px; box-shadow: 0 4px 24px rgba(37,99,235,0.06); }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 20px rgba(37,99,235,0.18); }
+        .logo h1 { font-size: 26px; font-weight: 800; color: #2563EB; margin-top: 12px; }
+        .logo p { color: #64748b; font-size: 14px; margin-top: 2px; }
+        .info {
+            background: #f0f4ff; border: 1px solid #c7d7fe;
+            border-radius: 12px; padding: 14px;
+            font-size: 14px; color: #1e40af; text-align: center;
+            margin-bottom: 16px;
+        }
+        .info strong { color: #2563EB; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        .code-input {
+            width: 100%; padding: 16px;
+            background: #f8fafc; border: 2px solid #e2e8f0;
+            border-radius: 12px; color: #1a202c;
+            font-size: 28px; text-align: center;
+            letter-spacing: 12px; font-family: monospace;
+            outline: none; transition: all .2s;
+        }
+        .code-input:focus { border-color: #2563EB; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+        .btn {
+            width: 100%; padding: 13px;
+            background: #2563EB; border: none; border-radius: 12px;
+            color: #fff; font-size: 15px; font-weight: 600;
+            cursor: pointer; margin-top: 8px; transition: all .2s;
+        }
+        .btn:hover { background: #1d4ed8; }
+        .err { font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+        .err.error { color: #ef4444; }
+        .err.success { color: #10b981; }
+        .resend { text-align: center; margin-top: 12px; font-size: 13px; color: #64748b; }
+        .resend a { color: #2563EB; cursor: pointer; font-weight: 600; }
+        .footer { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #64748b; font-size: 14px; }
+        .footer a { color: #2563EB; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="auth-bg"><div class="blob b1"></div><div class="blob b2"></div></div>
-    <div class="auth-wrap">
-        <div class="auth-card">
-            <div class="auth-logo">
-                <img src="/static/icon-192.png" style="width:72px;height:72px;border-radius:18px" alt="Gyert">
+    <div class="bg"><div class="blob b1"></div><div class="blob b2"></div></div>
+    <div class="wrap">
+        <div class="card">
+            <div class="logo">
+                <img src="/static/icon-192.png" alt="Gyert">
                 <h1>Gyert</h1>
                 <p>Подтверждение email</p>
             </div>
-            <div class="email-info">
-                📧 Мы отправили 6-значный код на <strong id="emailDisplay">ваш email</strong>
+            <div class="info">
+                📧 Код отправлен на<br><strong id="emailDisplay">ваш email</strong>
             </div>
             <form id="verifyForm">
                 <div class="field">
-                    <label>Код подтверждения</label>
+                    <label>6-значный код</label>
                     <input type="text" id="code" class="code-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
                 </div>
-                <button type="submit" class="btn-auth">Подтвердить</button>
-                <div class="auth-error" id="err"></div>
+                <button type="submit" class="btn">Подтвердить</button>
+                <div class="err" id="err"></div>
             </form>
             <div class="resend">
                 Не пришло письмо? <a onclick="resend()">Отправить повторно</a>
             </div>
-            <div class="auth-footer">
-                <a href="/feed">Пропустить (подтвердите позже)</a>
+            <div class="footer">
+                <a href="/feed">Пропустить (подтвердить позже)</a>
             </div>
         </div>
     </div>
     <script>
-        fetch('/api/me').then(r=>r.json()).then(u=>{document.getElementById('emailDisplay').textContent=u.email||'ваш email';if(u.email_verified)location.href='/feed'});
-        
+        fetch('/api/me').then(r=>r.json()).then(u=>{
+            document.getElementById('emailDisplay').textContent=u.email||'ваш email';
+            if(u.email_verified) location.href='/feed';
+        });
+
         document.getElementById('code').oninput=e=>e.target.value=e.target.value.replace(/\D/g,'');
-        
+
         document.getElementById('verifyForm').onsubmit=async e=>{
             e.preventDefault();
-            const err=document.getElementById('err');err.textContent='';
+            const err=document.getElementById('err'); err.className='err'; err.textContent='';
             const r=await fetch('/api/email/verify',{method:'POST',headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({code:document.getElementById('code').value})});
             const d=await r.json();
-            if(d.success){location.href='/feed'}
-            else err.textContent=d.error||'Ошибка';
+            if(d.success) location.href='/feed';
+            else { err.className='err error'; err.textContent=d.error||'Ошибка'; }
         };
-        
+
         async function resend(){
             const r=await fetch('/api/email/send',{method:'POST'});
             const d=await r.json();
             const err=document.getElementById('err');
-            if(d.success){err.style.color='#2563EB';err.textContent='✓ Письмо отправлено!';if(d.dev_code)err.textContent+=' (DEV код: '+d.dev_code+')'}
-            else{err.style.color='#ff3b3b';err.textContent=d.error||'Ошибка'}
+            if(d.success){
+                err.className='err success';
+                err.textContent='✓ Письмо отправлено!';
+                if(d.dev_code) err.textContent+=' DEV код: '+d.dev_code;
+            } else {
+                err.className='err error';
+                err.textContent=d.error||'Ошибка';
+            }
         }
     </script>
 </body>

@@ -5,137 +5,134 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gyert — Регистрация</title>
     <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta name="theme-color" content="#2563EB">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             min-height: 100vh;
-            background: #0a0a1a;
+            background: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #e0e0ff;
+            color: #1a202c;
             overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
         }
-        .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .3; }
-        .b1 { width: 400px; height: 400px; background: #4d7cff; top: -100px; right: -100px; }
-        .b2 { width: 350px; height: 350px; background: #ff3b6f; bottom: -80px; left: -80px; }
+        .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .12; }
+        .b1 { width: 400px; height: 400px; background: #2563EB; top: -100px; right: -100px; }
+        .b2 { width: 350px; height: 350px; background: #60A5FA; bottom: -80px; left: -80px; }
         .wrap {
             position: relative; z-index: 1;
-            max-width: 440px; margin: 0 auto;
+            max-width: 460px; margin: 0 auto;
             padding: 40px 20px 60px;
         }
         .card {
-            background: rgba(16,16,36,.92);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(77,124,255,.12);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 24px;
             padding: 36px 32px;
+            box-shadow: 0 4px 24px rgba(37,99,235,0.06);
         }
         .logo { text-align: center; margin-bottom: 28px; }
-        .logo-icon {
-            width: 64px; height: 64px;
-            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
+        .logo img {
+            width: 72px; height: 72px;
             border-radius: 18px;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 32px; font-weight: 900; color: #fff;
-            margin-bottom: 10px;
+            box-shadow: 0 8px 20px rgba(37,99,235,0.18);
         }
         .logo h1 {
             font-size: 26px; font-weight: 800;
-            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            color: #2563EB;
+            margin-top: 12px;
         }
-        .logo p { color: #666; font-size: 14px; margin-top: 2px; }
+        .logo p { color: #64748b; font-size: 14px; margin-top: 2px; }
 
         .field { margin-bottom: 16px; }
         .field label {
-            display: block; font-size: 12px; font-weight: 700;
-            color: #8888aa; text-transform: uppercase;
-            letter-spacing: .5px; margin-bottom: 6px;
+            display: block; font-size: 13px; font-weight: 600;
+            color: #475569; margin-bottom: 6px;
         }
-        .field label small { color: #555; font-weight: 400; text-transform: none; }
+        .field label small { color: #94a3b8; font-weight: 400; }
         .field-row { position: relative; display: flex; align-items: center; }
         .prefix {
             position: absolute; left: 14px;
-            color: #4d7cff; font-weight: 700; font-size: 16px;
+            color: #2563EB; font-weight: 700; font-size: 16px;
         }
         .field-row input { padding-left: 32px !important; }
         input, textarea {
             width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,.05);
-            border: 1px solid rgba(255,255,255,.08);
-            border-radius: 12px; color: #e0e0ff;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            color: #1a202c;
             font-size: 15px; outline: none;
-            transition: border-color .3s, box-shadow .3s;
+            transition: all .2s;
             font-family: inherit;
         }
-        input:focus { border-color: #4d7cff; box-shadow: 0 0 16px rgba(77,124,255,.2); }
-        input::placeholder { color: rgba(255,255,255,.2); }
+        input:focus {
+            border-color: #2563EB;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+        }
+        input::placeholder { color: #94a3b8; }
 
-        /* Avatar section */
         .ava-preview {
             display: flex; flex-direction: column;
             align-items: center; gap: 4px; margin-bottom: 8px;
         }
         .ava-circle {
             width: 72px; height: 72px; border-radius: 50%;
-            background: linear-gradient(135deg, rgba(77,124,255,.15), rgba(255,59,111,.1));
-            border: 3px solid #4d7cff;
+            background: #f0f4ff;
+            border: 3px solid #2563EB;
             display: flex; align-items: center; justify-content: center;
             font-size: 36px;
-            box-shadow: 0 0 20px rgba(77,124,255,.25);
-            transition: all .3s;
+            box-shadow: 0 0 20px rgba(37,99,235,0.15);
         }
-        .ava-label { font-size: 11px; color: #555; }
+        .ava-label { font-size: 11px; color: #64748b; }
         .emoji-box {
-            background: rgba(255,255,255,.02);
-            border: 1px solid rgba(255,255,255,.06);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 14px; padding: 10px;
         }
         .emoji-grid {
             max-height: 140px; overflow-y: auto;
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
         }
-        .emoji-grid::-webkit-scrollbar { width: 4px; }
-        .emoji-grid::-webkit-scrollbar-thumb { background: rgba(77,124,255,.25); border-radius: 2px; }
         .ep {
             aspect-ratio: 1; font-size: 24px;
-            background: rgba(255,255,255,.03);
-            border: 2px solid rgba(255,255,255,.06);
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
             border-radius: 10px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: all .15s;
         }
-        .ep:hover { border-color: #4d7cff; transform: scale(1.08); }
+        .ep:hover { border-color: #2563EB; background: #f0f4ff; }
         .ep.sel {
-            border-color: #4d7cff;
-            background: rgba(77,124,255,.18);
-            box-shadow: 0 0 12px rgba(77,124,255,.35);
+            border-color: #2563EB;
+            background: #2563EB;
         }
-        .hint { text-align: center; font-size: 10px; color: #444; margin-top: 4px; }
+        .hint { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 4px; }
 
-        /* Password strength */
         .pw-bar { height: 3px; border-radius: 2px; margin-top: 5px; transition: all .3s; }
-        .pw-w { width: 33%; background: #ff3b3b; }
-        .pw-m { width: 66%; background: #ffaa00; }
-        .pw-s { width: 100%; background: #00cc44; }
+        .pw-w { width: 33%; background: #ef4444; }
+        .pw-m { width: 66%; background: #f59e0b; }
+        .pw-s { width: 100%; background: #10b981; }
 
         .btn {
-            width: 100%; padding: 14px;
-            background: linear-gradient(135deg, #4d7cff, #ff3b6f);
+            width: 100%; padding: 13px;
+            background: #2563EB;
             border: none; border-radius: 12px;
-            color: #fff; font-size: 16px; font-weight: 700;
+            color: #ffffff; font-size: 15px; font-weight: 600;
             cursor: pointer; margin-top: 8px;
-            transition: all .3s; text-transform: uppercase; letter-spacing: 1px;
+            transition: all .2s;
         }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(77,124,255,.35); }
-        .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-        .err { color: #ff3b6f; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+        .btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37,99,235,0.25); }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .err { color: #ef4444; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
         .footer {
             text-align: center; margin-top: 20px;
-            padding-top: 16px; border-top: 1px solid rgba(255,255,255,.05);
-            color: #555; font-size: 14px;
+            padding-top: 16px; border-top: 1px solid #e5e7eb;
+            color: #64748b; font-size: 14px;
         }
-        .footer a { color: #4d7cff; text-decoration: none; font-weight: 600; }
+        .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -143,7 +140,7 @@
     <div class="wrap">
         <div class="card">
             <div class="logo">
-                <div class="logo-icon">G</div>
+                <img src="/static/icon-192.png" alt="Gyert">
                 <h1>Gyert</h1>
                 <p>Создайте аккаунт</p>
             </div>
@@ -165,7 +162,7 @@
                 </div>
                 <div class="field">
                     <label>Email <small>(будет проверен)</small></label>
-                    <input type="email" id="email" placeholder="example@mail.com" autocomplete="email" required>
+                    <input type="email" id="email" placeholder="example@mail.com" required>
                 </div>
                 <div class="field">
                     <label>Юзернейм</label>
@@ -222,9 +219,9 @@
             try{
                 const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({username:document.getElementById('un').value, display_name:document.getElementById('dn').value,
-                        password:pw, phone:document.getElementById('ph').value, email:document.getElementById('email')?.value||'', avatar_emoji:sel})});
+                        password:pw, phone:document.getElementById('ph').value, email:document.getElementById('email').value, avatar_emoji:sel})});
                 const d=await r.json();
-                if(d.success) window.location.href='/feed';
+                if(d.success) window.location.href=d.verify_required?'/verify-email':'/feed';
                 else{err.textContent=d.error||'Ошибка'; sub.disabled=false; sub.textContent='Зарегистрироваться';}
             }catch(x){err.textContent='Ошибка соединения'; sub.disabled=false; sub.textContent='Зарегистрироваться';}
         };
