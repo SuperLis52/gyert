@@ -62,6 +62,12 @@ class User(UserMixin, db.Model):
     def is_following(self, user):
         return self.following.filter(followers_table.c.followed_id == user.id).count() > 0
 
+    def get_premium(self):
+        up = UserPremium.query.filter_by(user_id=self.id).first()
+        if up and up.is_valid():
+            return up.to_dict()
+        return None
+
     def get_nft_badge(self):
         nft = UserNft.query.filter_by(user_id=self.id, equipped=True).first()
         if nft and nft.nft:
@@ -81,6 +87,8 @@ class User(UserMixin, db.Model):
             'followers_count': self.followers_count(), 'following_count': self.following_count(),
             'posts_count': self.posts.count(),
             'nft_badge': self.get_nft_badge(),
+            'is_premium': self.get_premium() is not None,
+            'premium': self.get_premium(),
         }
         if current_user_id:
             from flask_login import current_user as cu
@@ -355,3 +363,49 @@ class StickerPack(db.Model):
     stickers = db.Column(db.Text, default='[]')
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'stickers': json.loads(self.stickers)}
+
+class PremiumPlan(db.Model):
+    __tablename__ = 'premium_plans'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    price_month = db.Column(db.Float, nullable=False)
+    price_year = db.Column(db.Float, nullable=False)
+    features = db.Column(db.Text, default='[]')
+    color = db.Column(db.String(20), default='#4d7cff')
+    emoji = db.Column(db.String(10), default='⭐')
+
+
+class UserPremium(db.Model):
+    __tablename__ = 'user_premium'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey('premium_plans.id'), nullable=False)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    plan = db.relationship('PremiumPlan')
+
+    def is_valid(self):
+        return self.is_active and self.expires_at > datetime.utcnow()
+
+    def to_dict(self):
+        return {
+            'plan': {'name': self.plan.name, 'emoji': self.plan.emoji, 'color': self.plan.color} if self.plan else None,
+            'expires_at': self.expires_at.isoformat(),
+            'is_valid': self.is_valid(),
+            'days_left': max(0, (self.expires_at - datetime.utcnow()).days)
+        }
+
+
+class TelegramAuth(db.Model):
+    __tablename__ = 'telegram_auth'
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(20), unique=True, nullable=False)
+    telegram_id = db.Column(db.String(50), nullable=False)
+    tg_name = db.Column(db.String(200), nullable=True)
+    tg_username = db.Column(db.String(100), nullable=True)
+    action = db.Column(db.String(20), default='register')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)

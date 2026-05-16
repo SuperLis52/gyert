@@ -5,6 +5,7 @@ from flask_socketio import SocketIO, emit, join_room
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import (db, User, Post, Comment, Story, StoryView, Notification,
+                    UserPremium, PremiumPlan, TelegramAuth,
                     Chat, ChatMember, Message, MessageRead, Reaction,
                     NftCode, UserNft, StickerPack, likes_table, followers_table)
 
@@ -97,6 +98,45 @@ def create_nft_codes():
         db.session.add(NftCode(code=c[0],nft_type=c[1],nft_emoji=c[2],nft_name=c[3],nft_price=c[4]))
     db.session.commit()
 
+
+def create_premium_plans():
+    if PremiumPlan.query.count() > 0:
+        return
+    plans = [
+        {
+            'name': 'Gyert Plus',
+            'emoji': '⭐',
+            'price_month': 199,
+            'price_year': 1499,
+            'color': '#4d7cff',
+            'features': ['ИИ ассистент без лимитов', 'Лента без рекламы', 'Эксклюзивные стикеры', 'Значок Plus у профиля', 'Приоритетная поддержка']
+        },
+        {
+            'name': 'Gyert Pro',
+            'emoji': '💎',
+            'price_month': 399,
+            'price_year': 2999,
+            'color': '#8b5cf6',
+            'features': ['Всё из Plus', 'Неограниченная музыка', 'Расширенная аналитика', 'Кастомный URL профиля', 'Ранний доступ к функциям', 'Верификация аккаунта', 'Хранилище медиа 50 ГБ']
+        },
+        {
+            'name': 'Gyert Business',
+            'emoji': '🚀',
+            'price_month': 999,
+            'price_year': 7999,
+            'color': '#ff6b35',
+            'features': ['Всё из Pro', 'Бизнес-аналитика', 'API доступ', 'Командный аккаунт (5 мест)', 'Рекламный кабинет', 'Выделенная поддержка 24/7', 'Хранилище медиа 200 ГБ']
+        }
+    ]
+    for p in plans:
+        db.session.add(PremiumPlan(
+            name=p['name'], emoji=p['emoji'],
+            price_month=p['price_month'], price_year=p['price_year'],
+            color=p['color'], features=json.dumps(p['features'])
+        ))
+    db.session.commit()
+    print('Premium plans created')
+
 def create_stickers():
     if StickerPack.query.count() > 0:
         return
@@ -178,6 +218,20 @@ def search_page():
 @login_required
 def post_page(post_id):
     return render_template('main.html', page='post', post_id=post_id)
+
+
+@app.route('/register-tg')
+def register_tg_page():
+    return render_template('register_tg.html')
+
+@app.route('/login-tg')
+def login_tg_page():
+    return render_template('login_tg.html')
+
+@app.route('/premium')
+@login_required
+def premium_page():
+    return render_template('main.html', page='premium')
 
 @app.route('/join/<code>')
 def join_group(code):
@@ -968,6 +1022,7 @@ if __name__ == '__main__':
         db.create_all()
         create_nft_codes()
         create_stickers()
+    create_premium_plans()
     print('\n'+'='*50+'\n  GYERT SOCIAL NETWORK\n  http://localhost:5000\n'+'='*50+'\n')
     port = int(os.environ.get('PORT',5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)

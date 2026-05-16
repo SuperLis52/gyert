@@ -63,6 +63,9 @@ class App{
         }else if(this.page==='ai'){
             if(sb)sb.style.display='none';if(sr)sr.style.display='none';
             c.innerHTML=this.aiPage();
+        }else if(this.page==='premium'){
+            if(sb)sb.style.display='none';if(sr)sr.style.display='none';
+            c.innerHTML='<div id="premiumPage"></div>';await this.loadPremium();
         }else if(this.page==='music'){
             if(sb)sb.style.display='none';if(sr)sr.style.display='none';
             c.innerHTML='<div class="empty-state"><div class="es-icon">🎵</div><h3>Gyert Music</h3><p>Скоро!</p></div>';

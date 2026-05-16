@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyert — Регистрация через Telegram</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <style>
+        .tg-steps { display:flex; flex-direction:column; gap:16px; margin:20px 0; }
+        .step { display:flex; align-items:flex-start; gap:14px; padding:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; }
+        .step-num { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#4d7cff,#ff3b6f); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0; }
+        .step-text { flex:1; }
+        .step-text strong { display:block; font-size:14px; margin-bottom:3px; }
+        .step-text span { font-size:13px; color:#8888aa; }
+        .tg-btn { display:flex; align-items:center; justify-content:center; gap:10px; padding:14px; background:#2AABEE; border:none; border-radius:12px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .3s; }
+        .tg-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(42,171,238,.4); }
+        .code-section { display:none; }
+        .code-section.show { display:block; }
+        .emoji-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; max-height:120px; overflow-y:auto; margin:8px 0; }
+        .ep { aspect-ratio:1; font-size:22px; background:rgba(255,255,255,.04); border:2px solid rgba(255,255,255,.08); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+        .ep:hover { border-color:#4d7cff; }
+        .ep.sel { border-color:#4d7cff; background:rgba(77,124,255,.2); }
+        .ava-preview { width:64px; height:64px; border-radius:50%; background:rgba(77,124,255,.15); border:3px solid #4d7cff; display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 8px; }
+    </style>
+</head>
+<body>
+    <div class="auth-bg"><div class="blob b1"></div><div class="blob b2"></div></div>
+    <div class="auth-wrap">
+        <div class="auth-card" style="max-width:460px">
+            <div class="auth-logo">
+                <div class="logo-circle">G</div>
+                <h1>Gyert</h1>
+                <p>Регистрация через Telegram</p>
+            </div>
+
+            <!-- Step 1: Open bot -->
+            <div id="step1">
+                <div class="tg-steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-text">
+                            <strong>Откройте Telegram бота</strong>
+                            <span>Нажмите кнопку ниже и напишите боту /start</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-text">
+                            <strong>Нажмите "Зарегистрироваться"</strong>
+                            <span>Бот пришлёт вам 6-значный код</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-text">
+                            <strong>Введите код здесь</strong>
+                            <span>Заполните данные и создайте аккаунт</span>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="https://t.me/GyertBot" target="_blank" class="tg-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.012 9.483c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.875.738z"/></svg>
+                    Открыть @GyertBot
+                </a>
+
+                <div style="text-align:center;margin-top:16px">
+                    <button class="btn-auth" style="padding:10px 24px;font-size:14px" onclick="document.getElementById('step1').style.display='none';document.getElementById('step2').style.display='block'">
+                        У меня есть код →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Enter code + data -->
+            <div id="step2" style="display:none">
+                <form id="regForm">
+                    <div class="field">
+                        <label>Код из Telegram</label>
+                        <input type="text" id="code" placeholder="ABC123" maxlength="6" required style="text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center">
+                    </div>
+                    <div class="field">
+                        <label>Выберите аватар</label>
+                        <div class="ava-preview" id="prev">😊</div>
+                        <div class="emoji-grid" id="grid"></div>
+                    </div>
+                    <div class="field">
+                        <label>Имя</label>
+                        <input type="text" id="name" placeholder="Ваше имя" required>
+                    </div>
+                    <div class="field">
+                        <label>Юзернейм</label>
+                        <div class="field-wrap">
+                            <span class="prefix">@</span>
+                            <input type="text" id="username" placeholder="username" required pattern="[a-zA-Z0-9_]{3,}">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-auth">Создать аккаунт</button>
+                    <div class="auth-error" id="err"></div>
+                </form>
+                <div style="text-align:center;margin-top:12px">
+                    <a href="#" onclick="document.getElementById('step1').style.display='block';document.getElementById('step2').style.display='none'" style="color:#8888aa;font-size:13px">← Назад</a>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                Уже есть аккаунт? <a href="/login">Войти</a> ·
+                <a href="/register">Обычная регистрация</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const E=['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😇','🥰','😍','🤩','😘','😋','😛','🤪','🤓','😎','🥳','😤','🤗','🤔','🤫','🤭','😶','😏','😌','😴','🤯','🥺','😈','👻','💀','🤖','👽','🦊','🐱','🐶','🐻','🐼','🦁','🐯','🐸','🐵','🦋','🦄','🌸','🔥','⚡','🌈','💎','🚀'];
+        let sel='😊';
+        const g=document.getElementById('grid');
+        E.forEach(e=>{const b=document.createElement('button');b.type='button';b.className='ep'+(e===sel?' sel':'');b.textContent=e;b.onclick=()=>{sel=e;document.getElementById('prev').textContent=e;g.querySelectorAll('.ep').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};g.appendChild(b)});
+
+        document.getElementById('code').oninput=e=>e.target.value=e.target.value.toUpperCase();
+
+        document.getElementById('regForm').onsubmit=async e=>{
+            e.preventDefault();
+            const err=document.getElementById('err');err.textContent='';
+            const r=await fetch('/api/tg/register',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({code:document.getElementById('code').value,display_name:document.getElementById('name').value,username:document.getElementById('username').value,avatar_emoji:sel})});
+            const d=await r.json();
+            if(d.success)window.location.href='/feed';
+            else err.textContent=d.error||'Ошибка';
+        };
+    </script>
+</body>
+</html>
