@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyert</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar-left">
+            <div class="logo">
+                <img src="/static/logo-default.png" alt="Gyert" id="logo-img">
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-page="chat">💬 Чаты</a>
+                <a href="#" class="nav-item" data-page="settings">⚙️ Настройки</a>
+            </nav>
+            <div class="theme-switcher">
+                <button class="theme-btn active" data-theme="light-blue">☀️</button>
+                <button class="theme-btn" data-theme="dark">🌙</button>
+                <button class="theme-btn" data-theme="light">💼</button>
+            </div>
+            <div class="user-info" id="user-info">
+                <img id="user-avatar" src="" alt="">
+                <span id="user-name"></span>
+            </div>
+        </aside>
+        <main class="chat-area">
+            <div class="chat-list" id="chat-list"></div>
+            <div class="chat-window" id="chat-window">
+                <div class="empty-state">Выберите чат</div>
+            </div>
+        </main>
+        <aside class="sidebar-right">
+            <h3>🎬 Lenta</h3>
+            <div id="reels-container"></div>
+        </aside>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

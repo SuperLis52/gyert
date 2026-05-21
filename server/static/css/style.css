@@ -1,0 +1,59 @@
+﻿:root {
+    --bg: #ffffff;
+    --surface: #f5f5f5;
+    --text: #1a1a1a;
+    --text-secondary: #555;
+    --accent: #2563EB;
+    --accent-light: #3B82F6;
+    --border: #e2e8f0;
+    --radius: 12px;
+}
+body.theme-dark {
+    --bg: #000000;
+    --surface: #121212;
+    --text: #ffffff;
+    --text-secondary: #aaaaaa;
+    --accent: #2563EB;
+    --accent-light: #3B82F6;
+    --border: #333;
+}
+body.theme-light {
+    --bg: #ffffff;
+    --surface: #f8f9fa;
+    --text: #212529;
+    --text-secondary: #6c757d;
+    --accent: #0d6efd;
+    --accent-light: #6610f2;
+    --border: #dee2e6;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+#app { display: flex; height: 100vh; }
+.sidebar-left { width: 260px; background: var(--surface); padding: 20px; display: flex; flex-direction: column; }
+.logo img { width: 120px; margin-bottom: 20px; }
+.nav-item { display: block; padding: 10px; border-radius: var(--radius); color: var(--text); text-decoration: none; margin-bottom: 5px; }
+.nav-item.active, .nav-item:hover { background: var(--accent); color: white; }
+.theme-switcher { margin-top: auto; display: flex; gap: 8px; }
+.theme-btn { padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; background: var(--surface); color: var(--text); }
+.theme-btn.active { border-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.user-info { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+#user-avatar { width: 32px; height: 32px; border-radius: 50%; }
+.chat-area { flex: 1; display: flex; }
+.chat-list { width: 300px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+.chat-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.chat-item.active { background: var(--accent); color: white; }
+.chat-window { flex: 1; display: flex; flex-direction: column; }
+.empty-state { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.messages { flex: 1; overflow-y: auto; padding: 20px; }
+.message { margin-bottom: 10px; }
+.message .bubble { padding: 10px; border-radius: var(--radius); max-width: 70%; }
+.message.mine .bubble { background: var(--accent); color: white; margin-left: auto; }
+.message .time { font-size: 0.8em; color: var(--text-secondary); }
+.input-area { display: flex; padding: 10px; border-top: 1px solid var(--border); }
+.input-area input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); }
+.input-area button { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; }
+.sidebar-right { width: 300px; background: var(--surface); padding: 20px; border-left: 1px solid var(--border); overflow-y: auto; }
+.reel-card { margin-bottom: 15px; }
+.reel-card video, .reel-card img { width: 100%; border-radius: var(--radius); }
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; padding: 10px 20px; border-radius: var(--radius); display: none; z-index: 1000; }
+.badge { background: red; color: white; border-radius: 10px; padding: 2px 6px; font-size: 0.8em; float: right; }
