@@ -1,7 +1,7 @@
-﻿const CACHE_NAME = 'gyert-v1';
-const urlsToCache = [
-  '/static/js/app.js?v=3',
-  '/static/css/main.css?v=3',
+﻿const CACHE_NAME = 'gyert-v2';
+const STATIC_ASSETS = [
+  '/static/js/app.js?v=4',
+  '/static/css/main.css?v=4',
   '/static/logo-default.png',
   '/static/logo-dark.png',
   '/static/logo-light.png',
@@ -11,10 +11,10 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+  );
 });
 
 self.addEventListener('activate', event => {
@@ -30,16 +30,21 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Для HTML и API – всегда сеть
+  if (event.request.mode === 'navigate' || event.request.url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  // Для статики – кэш, потом сеть
   event.respondWith(
     caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request).then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
+      return cached || fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-        return networkResponse;
-      }).catch(() => cached);
-      return cached || fetchPromise;
+        return response;
+      });
     })
   );
 });

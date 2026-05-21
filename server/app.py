@@ -11,7 +11,7 @@ from models import (db, User, Post, Comment, Story, StoryView, Notification,
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gyert-social-secret-2024')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gyert.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gyert.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'avatars')
 app.config['MEDIA_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'media')

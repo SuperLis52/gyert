@@ -163,5 +163,16 @@
       .catch(err => console.log('SW error', err));
   }
 </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) registration.unregister();
+    }).then(() => {
+      navigator.serviceWorker.register('/static/sw.js', {scope: '/'})
+        .then(reg => console.log('SW registered', reg.scope))
+        .catch(err => console.log('SW error', err));
+    });
+  }
+</script>
 </body>
 </html>
