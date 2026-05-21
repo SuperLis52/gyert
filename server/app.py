@@ -1,6 +1,17 @@
 ﻿import os, uuid, json, re, secrets
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
+
+# ──────────────────────────────────
+# Статика с запретом кеша
+# ──────────────────────────────────
+@app.route('/static/<path:filename>')
+def static_no_cache(filename):
+    response = send_from_directory(app.static_folder, filename)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 from flask_socketio import SocketIO, emit, join_room
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash

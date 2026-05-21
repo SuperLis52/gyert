@@ -174,5 +174,35 @@
     });
   }
 </script>
+<script>
+  // Немедленная очистка кеша и service worker
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      for (let name of names) {
+        caches.delete(name);
+      }
+    });
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    }).then(() => {
+      // После удаления старого SW регистрируем новый
+      navigator.serviceWorker.register('/static/sw.js', {scope: '/'})
+        .then(reg => console.log('SW registered', reg.scope))
+        .catch(err => console.log('SW error', err));
+      // Принудительно перезагружаем страницу, если она была закеширована
+      if (window.caches) {
+        caches.keys().then(keys => {
+          if (keys.length === 0) {
+            location.reload(true);
+          }
+        });
+      }
+    });
+  }
+</script>
 </body>
 </html>
