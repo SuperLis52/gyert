@@ -1,4 +1,4 @@
-let T={feed:'Лента',messages:'Сообщения',notifications:'Уведомления',profile:'Профиль',search:'Поиск',settings:'Настройки',logout:'Выйти',follow:'Подписаться',unfollow:'Отписаться',send:'Отправить',reply:'Ответить',edit:'Редактировать',delete:'Удалить',save:'Сохранить',online:'в сети',typing:'печатает',today:'Сегодня',yesterday:'Вчера',no_posts:'Нет постов',no_chats:'Нет сообщений',write_post:'Что нового?',create_post:'Опубликовать',followers:'подписчиков',following:'подписок',posts:'постов',edit_profile:'Редактировать',copied:'Скопировано!',deleted:'Удалено',edited:'ред.',nft_code:'Код NFT',activate:'Активировать'};
+﻿let T={feed:'Лента',messages:'Сообщения',notifications:'Уведомления',profile:'Профиль',search:'Поиск',settings:'Настройки',logout:'Выйти',follow:'Подписаться',unfollow:'Отписаться',send:'Отправить',reply:'Ответить',edit:'Редактировать',delete:'Удалить',save:'Сохранить',online:'в сети',typing:'печатает',today:'Сегодня',yesterday:'Вчера',no_posts:'Нет постов',no_chats:'Нет сообщений',write_post:'Что нового?',create_post:'Опубликовать',followers:'подписчиков',following:'подписок',posts:'постов',edit_profile:'Редактировать',copied:'Скопировано!',deleted:'Удалено',edited:'ред.',nft_code:'Код NFT',activate:'Активировать'};
 function t(k){return T[k]||k}
 
 function toggleUserMenu(){document.getElementById('userMenu').classList.toggle('open')}
@@ -58,9 +58,9 @@ class App{
             if(sb)sb.style.display='none';if(sr)sr.style.display='';
             c.innerHTML='<div class="search-page"><input type="text" placeholder="Поиск..." id="spInp"><div id="spRes"></div></div>';
             document.getElementById('spInp').oninput=e=>this.searchP(e.target.value);document.getElementById('spInp').focus();
-        }else if(this.page==='reels'){
+        }else if(this.page==='lenta'){
             if(sb)sb.style.display='none';if(sr)sr.style.display='none';
-            c.innerHTML='<div id="reelsC" class="reels-container"></div>';await this.loadReels();
+            c.innerHTML='<div id="reelsC" class="reels-container"></div>';await this.loadLenta();
         }else if(this.page==='ai'){
             if(sb)sb.style.display='none';if(sr)sr.style.display='none';
             c.innerHTML=this.aiPage();

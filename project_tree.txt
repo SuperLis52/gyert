@@ -1,0 +1,65 @@
+﻿Folder PATH listing for volume OS
+Volume serial number is 00000013 E027:45AB
+C:.
+�   .gitignore
+�   fix.py
+�   fix_register.py
+�   patch_email_brand.py
+�   patch_premium.py
+�   patch_v2.py
+�   patch_v3.py
+�   project_tree.txt
+�   
++---Logos
+�       dark.jpg
+�       default.jpg
+�       light.jpg
+�       
++---server
+�   �   .gitignore
+�   �   app.py
+�   �   models.py
+�   �   requirements.txt
+�   �   telegram_bot.py
+�   �   wsgi.py
+�   �   
+�   +---instance
+�   +---middleware
+�   +---routes
+�   +---static
+�   �   �   favicon.png
+�   �   �   icon-192.png
+�   �   �   icon-512.png
+�   �   �   logo-dark.png
+�   �   �   logo-default.png
+�   �   �   logo-light.png
+�   �   �   manifest.json
+�   �   �   sw.js
+�   �   �   
+�   �   +---avatars
+�   �   �       default.png
+�   �   �       
+�   �   +---css
+�   �   �       auth.css
+�   �   �       main.css
+�   �   �       
+�   �   +---js
+�   �   �       app.js
+�   �   �       
+�   �   +---media
+�   �   +---posts
+�   �   L---voice
+�   +---templates
+�   �       login.html
+�   �       login_tg.html
+�   �       main.html
+�   �       register.html
+�   �       register_tg.html
+�   �       verify_email.html
+�   �       
+�   L---__pycache__
+�           models.cpython-312.pyc
+�           
+L---src
+    +---components
+    L---nft
