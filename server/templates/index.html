@@ -1,8 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
-<script>/*! Socket.IO v4.7.2 | MIT License */
-!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self).io=t()}(this,(function(){"use strict";var e={};function t(n,r){if(!e[n]){if(!r)throw new Error("Module not found: "+n);var i=r();e[n]=i.default||i}return e[n]}var n=t("socket.io-client");return n}));</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Gyert</title>
@@ -11,6 +9,7 @@
 </head>
 <body>
     <div id="app" class="theme-dark">
+        <!-- Боковая панель (десктоп) -->
         <aside class="sidebar">
             <div class="logo">
                 <img src="/static/logo-dark.png" alt="Gyert" id="logo-img" class="logo-img">
@@ -30,37 +29,70 @@
                 </button>
             </nav>
         </aside>
+
+        <!-- Основной контент -->
         <main class="main-content">
+            <!-- Список чатов -->
             <section id="chat-list-view" class="view active">
-                <div class="chat-list-header"><h2>Чаты</h2><button class="icon-btn" id="newChatBtn" title="Новый чат"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+                <div class="chat-list-header">
+                    <h2>Чаты</h2>
+                    <button class="icon-btn" id="newChatBtn" title="Новый чат">+</button>
+                </div>
                 <div class="chat-list" id="chatList"></div>
             </section>
+
+            <!-- Окно чата -->
             <section id="chat-view" class="view">
-                <div class="chat-header"><button class="back-btn" id="backToChats"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><div class="chat-title" id="chatTitle"></div></div>
+                <div class="chat-header">
+                    <button class="back-btn" id="backToChats">← Назад</button>
+                    <div class="chat-title" id="chatTitle"></div>
+                </div>
                 <div class="messages" id="messages"></div>
-                <div class="message-input"><input type="text" id="msgInput" placeholder="Сообщение..." autocomplete="off"><button id="sendBtn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+                <div class="message-input">
+                    <input type="text" id="msgInput" placeholder="Сообщение...">
+                    <button id="sendBtn">→</button>
+                </div>
             </section>
+
+            <!-- Lenta -->
             <section id="lenta-view" class="view">
                 <div class="lenta-header"><h2>Lenta</h2></div>
                 <div class="lenta-container" id="lentaContainer"></div>
             </section>
+
+            <!-- Настройки -->
             <section id="settings-view" class="view">
                 <div class="settings-panel">
                     <h2>Настройки</h2>
-                    <div class="setting-item"><span>Тема</span><select id="themeSelect"><option value="dark">BlackWhite</option><option value="light">WhiteBlack</option></select></div>
+                    <div class="setting-item"><span>Язык</span><select id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
+                    <div class="setting-item"><span>Тема</span><select id="themeSelect"><option value="dark">Тёмная</option><option value="light">Светлая</option><option value="blue">Голубая</option></select></div>
                     <div class="setting-item"><span>Liquid Glass</span><label class="switch"><input type="checkbox" id="glassCheckbox"><span class="slider round"></span></label></div>
                     <div class="setting-item"><span>Премиум</span><button class="btn-small" id="premiumBtn">Подключить</button></div>
                     <div class="setting-item"><span>Аккаунт</span><button class="btn-small" id="logoutBtn">Выйти</button></div>
                 </div>
             </section>
         </main>
+
+        <!-- Мобильная нижняя панель -->
         <nav class="mobile-nav" id="mobileNav">
             <button class="mobile-nav-btn active" data-page="chat"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>
             <button class="mobile-nav-btn" data-page="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
             <button class="mobile-nav-btn" data-page="lenta"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></button>
         </nav>
     </div>
+
+    <!-- Модальное окно регистрации -->
+    <div id="registerModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <h2>Регистрация</h2>
+            <p>Выберите способ:</p>
+            <button class="btn-full" onclick="location.href='/register-tg'">Через Telegram</button>
+            <button class="btn-full" onclick="alert('Ручная регистрация скоро будет доступна')">Вручную</button>
+            <button class="btn-close" onclick="document.getElementById('registerModal').style.display='none'">Отмена</button>
+        </div>
+    </div>
+
     <div id="toast" class="toast"></div>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=9"></script>
 </body>
 </html>
