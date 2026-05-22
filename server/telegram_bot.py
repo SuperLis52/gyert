@@ -1,27 +1,18 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Gyert Telegram Bot
-Регистрация и вход через Telegram
-Запуск: python telegram_bot.py
+Gyert Telegram Bot — Registration Flow
 """
-
-import os
-import json
-import time
-import hashlib
-import secrets
-import urllib.request
-import urllib.parse
+import os, json, time, secrets, hashlib
+import urllib.request, urllib.parse
 from datetime import datetime, timedelta
 
 BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 API_BASE = f'https://api.telegram.org/bot{BOT_TOKEN}'
 GYERT_URL = os.environ.get('GYERT_URL', 'http://localhost:5000')
 
-# Хранилище кодов (в продакшене используй Redis)
-pending_codes = {}  # {telegram_id: {code, username, name, expires}}
+# Хранилище состояний пользователей (в памяти, для прода нужно использовать Redis)
+user_states = {}   # {chat_id: {'step': 1, 'phone': ..., 'nickname': ..., 'username': ..., 'tg_name': ..., 'tg_username': ...}}
 offset = 0
-
 
 def api(method, **params):
     url = f'{API_BASE}/{method}'
@@ -34,13 +25,26 @@ def api(method, **params):
         print(f'API error: {e}')
         return {}
 
-
 def send(chat_id, text, markup=None):
     params = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}
     if markup:
         params['reply_markup'] = json.dumps(markup)
     return api('sendMessage', **params)
 
+def ask_phone(chat_id):
+    """Отправляет кнопку для отправки номера телефона"""
+    keyboard = [[{'text': '📱 Отправить номер телефона', 'request_contact': True}]]
+    send(chat_id, 'Для регистрации мне нужен ваш номер телефона. Нажмите кнопку ниже.', {'keyboard': keyboard, 'resize_keyboard': True, 'one_time_keyboard': True})
+
+def ask_nickname(chat_id):
+    keyboard = [[{'text': 'Пропустить'}]]
+    send(chat_id, 'Введите ваш никнейм (отображаемое имя):', {'keyboard': keyboard, 'resize_keyboard': True, 'one_time_keyboard': True})
+
+def ask_username(chat_id):
+    send(chat_id, 'Теперь введите @username (латиница, цифры, _):')
+
+def ask_password(chat_id):
+    send(chat_id, 'Придумайте пароль (минимум 6 символов):')
 
 def get_updates():
     global offset
@@ -50,96 +54,97 @@ def get_updates():
         offset = updates[-1]['update_id'] + 1
     return updates
 
-
-def generate_code():
-    return secrets.token_hex(3).upper()
-
-
 def process_message(msg):
     chat_id = msg['chat']['id']
-    text = msg.get('text', '')
     user = msg.get('from', {})
     tg_name = user.get('first_name', '') + (' ' + user.get('last_name', '') if user.get('last_name') else '')
     tg_username = user.get('username', '')
 
-    print(f'Message from {tg_name} (@{tg_username}): {text}')
+    # Обработка команды /start
+    if msg.get('text') == '/start':
+        user_states[chat_id] = {'step': 1, 'tg_name': tg_name, 'tg_username': tg_username}
+        ask_phone(chat_id)
+        return
 
-    if text == '/start':
-        send(chat_id,
-            '👋 <b>Добро пожаловать в Gyert!</b>\n\n'
-            'Я помогу вам зарегистрироваться или войти в социальную сеть Gyert.\n\n'
-            '📱 Выберите действие:',
-            markup={
-                'keyboard': [
-                    [{'text': '📝 Зарегистрироваться'}],
-                    [{'text': '🔑 Войти в аккаунт'}],
-                    [{'text': '❓ Помощь'}]
-                ],
-                'resize_keyboard': True
-            }
-        )
+    # Обработка контакта (номер телефона)
+    contact = msg.get('contact')
+    if contact:
+        if chat_id in user_states and user_states[chat_id].get('step') == 1:
+            phone = contact.get('phone_number', '')
+            # Сохраняем телефон (убираем '+' если есть)
+            user_states[chat_id]['phone'] = phone.replace('+', '')
+            user_states[chat_id]['step'] = 2
+            ask_nickname(chat_id)
+        else:
+            send(chat_id, 'Вы ещё не начали регистрацию. Напишите /start.')
+        return
 
-    elif text == '📝 Зарегистрироваться':
-        code = generate_code()
-        pending_codes[str(chat_id)] = {
-            'code': code,
-            'action': 'register',
-            'tg_id': chat_id,
-            'tg_name': tg_name,
-            'tg_username': tg_username,
-            'expires': (datetime.utcnow() + timedelta(minutes=10)).isoformat()
-        }
-        send(chat_id,
-            f'✅ <b>Ваш код регистрации:</b>\n\n'
-            f'<code>{code}</code>\n\n'
-            f'🌐 Откройте <a href="{GYERT_URL}/register-tg">страницу регистрации</a> '
-            f'и введите этот код.\n\n'
-            f'⏱ Код действителен <b>10 минут</b>.'
-        )
+    text = msg.get('text', '')
+    if not text:
+        return
 
-    elif text == '🔑 Войти в аккаунт':
-        code = generate_code()
-        pending_codes[str(chat_id)] = {
-            'code': code,
-            'action': 'login',
-            'tg_id': chat_id,
-            'tg_name': tg_name,
-            'tg_username': tg_username,
-            'expires': (datetime.utcnow() + timedelta(minutes=10)).isoformat()
-        }
-        send(chat_id,
-            f'🔑 <b>Ваш код входа:</b>\n\n'
-            f'<code>{code}</code>\n\n'
-            f'🌐 Откройте <a href="{GYERT_URL}/login-tg">страницу входа</a> '
-            f'и введите этот код.\n\n'
-            f'⏱ Код действителен <b>10 минут</b>.'
-        )
+    # Шаг 2: никнейм
+    if chat_id in user_states and user_states[chat_id].get('step') == 2:
+        if text == 'Пропустить':
+            nickname = tg_name
+        else:
+            nickname = text.strip()
+        user_states[chat_id]['nickname'] = nickname
+        user_states[chat_id]['step'] = 3
+        ask_username(chat_id)
+        return
 
-    elif text == '❓ Помощь':
-        send(chat_id,
-            '❓ <b>Помощь</b>\n\n'
-            '📝 <b>Регистрация</b> — создать новый аккаунт\n'
-            '🔑 <b>Войти</b> — войти в существующий аккаунт\n\n'
-            f'🌐 Сайт: {GYERT_URL}\n'
-            '📧 Поддержка: @gyert_support'
-        )
+    # Шаг 3: @username
+    if chat_id in user_states and user_states[chat_id].get('step') == 3:
+        username = text.strip().replace('@', '').lower()
+        if len(username) < 3:
+            send(chat_id, 'Username слишком короткий. Попробуйте ещё раз (минимум 3 символа).')
+            return
+        user_states[chat_id]['username'] = username
+        user_states[chat_id]['step'] = 4
+        ask_password(chat_id)
+        return
 
-    else:
-        send(chat_id, '👆 Используйте кнопки меню')
+    # Шаг 4: пароль
+    if chat_id in user_states and user_states[chat_id].get('step') == 4:
+        password = text.strip()
+        if len(password) < 6:
+            send(chat_id, 'Пароль слишком короткий. Минимум 6 символов.')
+            return
+        state = user_states.pop(chat_id)
+        # Регистрируем пользователя через API Gyert
+        try:
+            # Сначала регистрируем
+            reg_data = json.dumps({
+                'username': state['username'],
+                'display_name': state['nickname'],
+                'password': password,
+                'phone': state.get('phone', ''),
+                'avatar_emoji': '😊'
+            }).encode()
+            req = urllib.request.Request(f'{GYERT_URL}/api/register',
+                                         data=reg_data,
+                                         headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                if result.get('success'):
+                    send(chat_id, f'🎉 <b>Регистрация успешна!</b>\n\n'
+                                  f'Теперь вы можете войти в аккаунт на сайте Gyert:\n'
+                                  f'{GYERT_URL}/login\n\n'
+                                  f'Ваш логин: @{state["username"]}')
+                else:
+                    error_msg = result.get('error', 'Неизвестная ошибка')
+                    send(chat_id, f'❌ Ошибка: {error_msg}\nПопробуйте ещё раз, начав с /start.')
+        except Exception as e:
+            send(chat_id, f'❌ Ошибка соединения с сервером. Попробуйте позже.')
+        return
 
-
-def cleanup_expired():
-    now = datetime.utcnow()
-    expired = [k for k, v in pending_codes.items()
-               if datetime.fromisoformat(v['expires']) < now]
-    for k in expired:
-        del pending_codes[k]
-
+    # Если ни одно условие не подошло
+    send(chat_id, 'Я вас не понял. Используйте /start для начала регистрации.')
 
 def run():
     if not BOT_TOKEN:
         print('ERROR: Set TELEGRAM_BOT_TOKEN environment variable')
-        print('Get token from @BotFather in Telegram')
         return
 
     me = api('getMe')
@@ -154,7 +159,6 @@ def run():
             for upd in updates:
                 if 'message' in upd:
                     process_message(upd['message'])
-            cleanup_expired()
             time.sleep(0.5)
         except KeyboardInterrupt:
             print('\nBot stopped')
@@ -162,21 +166,6 @@ def run():
         except Exception as e:
             print(f'Error: {e}')
             time.sleep(5)
-
-
-# Export for Flask access
-def get_pending_code(chat_id):
-    return pending_codes.get(str(chat_id))
-
-def remove_code(chat_id):
-    pending_codes.pop(str(chat_id), None)
-
-def notify_success(chat_id, action, username):
-    if action == 'register':
-        send(chat_id, f'🎉 <b>Регистрация успешна!</b>\n\nДобро пожаловать в Gyert, @{username}!\n\n🚀 <a href="{GYERT_URL}/feed">Открыть приложение</a>')
-    else:
-        send(chat_id, f'✅ <b>Вы вошли в аккаунт!</b>\n\n🚀 <a href="{GYERT_URL}/feed">Открыть приложение</a>')
-
 
 if __name__ == '__main__':
     run()
