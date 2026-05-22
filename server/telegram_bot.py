@@ -1,171 +1,218 @@
 ﻿#!/usr/bin/env python3
 """
-Gyert Telegram Bot — Registration Flow
+Gyert Telegram Bot – Registration with steps, back button, and confirmation
 """
-import os, json, time, secrets, hashlib
-import urllib.request, urllib.parse
+import os
+import json
+import logging
+import asyncio
+import secrets
+import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta
 
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, CallbackContext
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-API_BASE = f'https://api.telegram.org/bot{BOT_TOKEN}'
 GYERT_URL = os.environ.get('GYERT_URL', 'http://localhost:5000')
+if not BOT_TOKEN:
+    logger.error("TELEGRAM_BOT_TOKEN не задан")
+    exit(1)
 
-# Хранилище состояний пользователей (в памяти, для прода нужно использовать Redis)
-user_states = {}   # {chat_id: {'step': 1, 'phone': ..., 'nickname': ..., 'username': ..., 'tg_name': ..., 'tg_username': ...}}
-offset = 0
+# Состояния разговора
+ASK_PHONE, ASK_NICKNAME, ASK_USERNAME, ASK_PASSWORD, CONFIRM = range(5)
 
-def api(method, **params):
-    url = f'{API_BASE}/{method}'
-    data = json.dumps(params).encode()
-    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+# Временное хранилище данных пользователей (в продакшене — Redis)
+user_data = {}
+
+def api_register(username, display_name, password, phone, avatar_emoji='😊'):
+    """Отправляет запрос на регистрацию в Gyert API"""
+    data = json.dumps({
+        'username': username,
+        'display_name': display_name,
+        'password': password,
+        'phone': phone,
+        'avatar_emoji': avatar_emoji
+    }).encode()
+    req = urllib.request.Request(f'{GYERT_URL}/api/register',
+                                 data=data,
+                                 headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return json.loads(r.read())
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read())
     except Exception as e:
-        print(f'API error: {e}')
-        return {}
+        logger.error(f"Registration API error: {e}")
+        return None
 
-def send(chat_id, text, markup=None):
-    params = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}
-    if markup:
-        params['reply_markup'] = json.dumps(markup)
-    return api('sendMessage', **params)
+async def start(update: Update, context: CallbackContext) -> int:
+    """Команда /start"""
+    user = update.effective_user
+    user_data[user.id] = {'tg_name': user.full_name, 'tg_username': user.username}
+    keyboard = [[KeyboardButton('📱 Отправить номер телефона', request_contact=True)]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(
+        '👋 Добро пожаловать в Gyert!\nДля регистрации мне нужен ваш номер телефона. Нажмите кнопку ниже.',
+        reply_markup=reply_markup
+    )
+    return ASK_PHONE
 
-def ask_phone(chat_id):
-    """Отправляет кнопку для отправки номера телефона"""
-    keyboard = [[{'text': '📱 Отправить номер телефона', 'request_contact': True}]]
-    send(chat_id, 'Для регистрации мне нужен ваш номер телефона. Нажмите кнопку ниже.', {'keyboard': keyboard, 'resize_keyboard': True, 'one_time_keyboard': True})
+async def phone_received(update: Update, context: CallbackContext) -> int:
+    """Получаем контакт (номер телефона)"""
+    contact = update.message.contact
+    if not contact:
+        await update.message.reply_text('Пожалуйста, используйте кнопку для отправки номера.')
+        return ASK_PHONE
+    user_id = update.effective_user.id
+    user_data[user_id]['phone'] = contact.phone_number
+    # Переходим к никнейму
+    keyboard = [['Пропустить']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(
+        'Введите ваш никнейм (отображаемое имя) или нажмите "Пропустить", чтобы использовать имя из Telegram.',
+        reply_markup=reply_markup
+    )
+    return ASK_NICKNAME
 
-def ask_nickname(chat_id):
-    keyboard = [[{'text': 'Пропустить'}]]
-    send(chat_id, 'Введите ваш никнейм (отображаемое имя):', {'keyboard': keyboard, 'resize_keyboard': True, 'one_time_keyboard': True})
+async def nickname_entered(update: Update, context: CallbackContext) -> int:
+    """Получаем никнейм"""
+    text = update.message.text.strip()
+    user_id = update.effective_user.id
+    if text == 'Пропустить':
+        nickname = user_data[user_id].get('tg_name', 'User')
+    else:
+        nickname = text
+    user_data[user_id]['nickname'] = nickname
+    keyboard = [['↩️ Назад']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(
+        f'Никнейм: <b>{nickname}</b>\nТеперь введите @username (латиница, цифры, _):',
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
+    return ASK_USERNAME
 
-def ask_username(chat_id):
-    send(chat_id, 'Теперь введите @username (латиница, цифры, _):')
+async def username_entered(update: Update, context: CallbackContext) -> int:
+    """Получаем username"""
+    text = update.message.text.strip()
+    user_id = update.effective_user.id
+    if text == '↩️ Назад':
+        # Возвращаемся к вводу никнейма
+        keyboard = [['Пропустить']]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await update.message.reply_text('Введите ваш никнейм:', reply_markup=reply_markup)
+        return ASK_NICKNAME
+    username = text.replace('@', '').lower()
+    if len(username) < 3:
+        await update.message.reply_text('Username слишком короткий. Минимум 3 символа.')
+        return ASK_USERNAME
+    # Проверка на допустимые символы
+    if not all(c.isalnum() or c == '_' for c in username):
+        await update.message.reply_text('Только латиница, цифры и _.')
+        return ASK_USERNAME
+    user_data[user_id]['username'] = username
+    keyboard = [['↩️ Назад']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(
+        f'Username: @{username}\nТеперь придумайте пароль (минимум 6 символов):',
+        reply_markup=reply_markup
+    )
+    return ASK_PASSWORD
 
-def ask_password(chat_id):
-    send(chat_id, 'Придумайте пароль (минимум 6 символов):')
+async def password_entered(update: Update, context: CallbackContext) -> int:
+    """Получаем пароль"""
+    text = update.message.text.strip()
+    user_id = update.effective_user.id
+    if text == '↩️ Назад':
+        keyboard = [['↩️ Назад']]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await update.message.reply_text('Введите @username:', reply_markup=reply_markup)
+        return ASK_USERNAME
+    password = text
+    if len(password) < 6:
+        await update.message.reply_text('Пароль слишком короткий. Минимум 6 символов.')
+        return ASK_PASSWORD
+    user_data[user_id]['password'] = password
+    # Показываем сводку и запрашиваем подтверждение
+    state = user_data[user_id]
+    summary = (
+        f'📋 <b>Проверьте данные:</b>\n'
+        f'Телефон: {state.get("phone", "не указан")}\n'
+        f'Никнейм: {state["nickname"]}\n'
+        f'Username: @{state["username"]}\n'
+        f'Пароль: {"*" * len(password)}\n\n'
+        f'Всё верно? Отправьте "Да" для завершения, или "Нет" для отмены.'
+    )
+    keyboard = [['✅ Да', '↩️ Назад']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(summary, reply_markup=reply_markup, parse_mode='HTML')
+    return CONFIRM
 
-def get_updates():
-    global offset
-    r = api('getUpdates', offset=offset, timeout=30, limit=10)
-    updates = r.get('result', [])
-    if updates:
-        offset = updates[-1]['update_id'] + 1
-    return updates
+async def confirm(update: Update, context: CallbackContext) -> int:
+    """Подтверждение и регистрация"""
+    text = update.message.text.strip().lower()
+    user_id = update.effective_user.id
+    if text == '↩️ назад' or text == 'нет':
+        await update.message.reply_text('Регистрация отменена. Начните заново с /start.',
+                                        reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+    if text != 'да' and text != '✅ да':
+        await update.message.reply_text('Пожалуйста, ответьте "Да" или "Нет".')
+        return CONFIRM
 
-def process_message(msg):
-    chat_id = msg['chat']['id']
-    user = msg.get('from', {})
-    tg_name = user.get('first_name', '') + (' ' + user.get('last_name', '') if user.get('last_name') else '')
-    tg_username = user.get('username', '')
+    state = user_data.pop(user_id, None)
+    if not state:
+        await update.message.reply_text('Ошибка состояния. Начните с /start.')
+        return ConversationHandler.END
 
-    # Обработка команды /start
-    if msg.get('text') == '/start':
-        user_states[chat_id] = {'step': 1, 'tg_name': tg_name, 'tg_username': tg_username}
-        ask_phone(chat_id)
-        return
+    # Регистрируем
+    result = api_register(
+        username=state['username'],
+        display_name=state['nickname'],
+        password=state['password'],
+        phone=state.get('phone', '')
+    )
+    if result and result.get('success'):
+        await update.message.reply_text(
+            f'🎉 <b>Регистрация успешна!</b>\n\n'
+            f'Теперь вы можете войти в аккаунт на сайте Gyert:\n'
+            f'{GYERT_URL}/login\n\n'
+            f'Ваш логин: @{state["username"]}',
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode='HTML'
+        )
+    else:
+        error = result.get('error', 'Неизвестная ошибка') if result else 'Ошибка соединения'
+        await update.message.reply_text(
+            f'❌ Ошибка регистрации: {error}\nПопробуйте снова /start.',
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return ConversationHandler.END
 
-    # Обработка контакта (номер телефона)
-    contact = msg.get('contact')
-    if contact:
-        if chat_id in user_states and user_states[chat_id].get('step') == 1:
-            phone = contact.get('phone_number', '')
-            # Сохраняем телефон (убираем '+' если есть)
-            user_states[chat_id]['phone'] = phone.replace('+', '')
-            user_states[chat_id]['step'] = 2
-            ask_nickname(chat_id)
-        else:
-            send(chat_id, 'Вы ещё не начали регистрацию. Напишите /start.')
-        return
+async def cancel(update: Update, context: CallbackContext) -> int:
+    await update.message.reply_text('Регистрация отменена.', reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
 
-    text = msg.get('text', '')
-    if not text:
-        return
+def run_bot():
+    """Запускает бота в текущем event loop (для интеграции с Flask)"""
+    application = Application.builder().token(BOT_TOKEN).build()
 
-    # Шаг 2: никнейм
-    if chat_id in user_states and user_states[chat_id].get('step') == 2:
-        if text == 'Пропустить':
-            nickname = tg_name
-        else:
-            nickname = text.strip()
-        user_states[chat_id]['nickname'] = nickname
-        user_states[chat_id]['step'] = 3
-        ask_username(chat_id)
-        return
-
-    # Шаг 3: @username
-    if chat_id in user_states and user_states[chat_id].get('step') == 3:
-        username = text.strip().replace('@', '').lower()
-        if len(username) < 3:
-            send(chat_id, 'Username слишком короткий. Попробуйте ещё раз (минимум 3 символа).')
-            return
-        user_states[chat_id]['username'] = username
-        user_states[chat_id]['step'] = 4
-        ask_password(chat_id)
-        return
-
-    # Шаг 4: пароль
-    if chat_id in user_states and user_states[chat_id].get('step') == 4:
-        password = text.strip()
-        if len(password) < 6:
-            send(chat_id, 'Пароль слишком короткий. Минимум 6 символов.')
-            return
-        state = user_states.pop(chat_id)
-        # Регистрируем пользователя через API Gyert
-        try:
-            # Сначала регистрируем
-            reg_data = json.dumps({
-                'username': state['username'],
-                'display_name': state['nickname'],
-                'password': password,
-                'phone': state.get('phone', ''),
-                'avatar_emoji': '😊'
-            }).encode()
-            req = urllib.request.Request(f'{GYERT_URL}/api/register',
-                                         data=reg_data,
-                                         headers={'Content-Type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                result = json.loads(resp.read())
-                if result.get('success'):
-                    send(chat_id, f'🎉 <b>Регистрация успешна!</b>\n\n'
-                                  f'Теперь вы можете войти в аккаунт на сайте Gyert:\n'
-                                  f'{GYERT_URL}/login\n\n'
-                                  f'Ваш логин: @{state["username"]}')
-                else:
-                    error_msg = result.get('error', 'Неизвестная ошибка')
-                    send(chat_id, f'❌ Ошибка: {error_msg}\nПопробуйте ещё раз, начав с /start.')
-        except Exception as e:
-            send(chat_id, f'❌ Ошибка соединения с сервером. Попробуйте позже.')
-        return
-
-    # Если ни одно условие не подошло
-    send(chat_id, 'Я вас не понял. Используйте /start для начала регистрации.')
-
-def run():
-    if not BOT_TOKEN:
-        print('ERROR: Set TELEGRAM_BOT_TOKEN environment variable')
-        return
-
-    me = api('getMe')
-    bot_name = me.get('result', {}).get('username', 'Unknown')
-    print(f'Bot started: @{bot_name}')
-    print(f'Gyert URL: {GYERT_URL}')
-    print('Waiting for messages...')
-
-    while True:
-        try:
-            updates = get_updates()
-            for upd in updates:
-                if 'message' in upd:
-                    process_message(upd['message'])
-            time.sleep(0.5)
-        except KeyboardInterrupt:
-            print('\nBot stopped')
-            break
-        except Exception as e:
-            print(f'Error: {e}')
-            time.sleep(5)
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            ASK_PHONE: [MessageHandler(filters.CONTACT, phone_received)],
+            ASK_NICKNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, nickname_entered)],
+            ASK_USERNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, username_entered)],
+            ASK_PASSWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, password_entered)],
+            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+    application.add_handler(conv_handler)
+    application.run_polling(allowed_updates=Update.ALL_TYPES, stop_signals=None)
 
 if __name__ == '__main__':
-    run()
+    run_bot()
