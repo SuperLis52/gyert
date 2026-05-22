@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentUser) return;
     socket.emit('join', { username: currentUser.username });
     loadChats();
-    bindNavigation();   // <-- исправлено
+    bindNavigation();   // <-- главное исправление
     setupTheme();
     bindChatInput();
     socket.on('new_message', handleNewMessage);
@@ -105,9 +105,8 @@ function showToast(data) {
     setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-// ========== НАВИГАЦИЯ ==========
 function bindNavigation() {
-    // Кнопки боковой панели
+    // Боковая панель
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const page = e.currentTarget.dataset.page;
@@ -117,7 +116,7 @@ function bindNavigation() {
         });
     });
 
-    // Мобильная нижняя панель
+    // Мобильная навигация
     document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const page = e.currentTarget.dataset.page;
@@ -131,7 +130,7 @@ function bindNavigation() {
     const backBtn = document.getElementById('backToChats');
     if (backBtn) backBtn.addEventListener('click', () => switchView('chat-list-view'));
 
-    // Новая кнопка создания чата (заглушка)
+    // Кнопка нового чата (заглушка)
     const newChatBtn = document.getElementById('newChatBtn');
     if (newChatBtn) newChatBtn.addEventListener('click', () => alert('Новый чат скоро появится'));
 
@@ -152,13 +151,10 @@ function bindNavigation() {
 }
 
 function switchView(viewId) {
-    // Скрываем все views
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    // Показываем нужный
     const target = document.getElementById(viewId);
     if (target) target.classList.add('active');
 
-    // Обновляем активные классы в навигации
     document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(b => b.classList.remove('active'));
     if (viewId === 'chat-list-view') {
         document.querySelectorAll('[data-page="chat"]').forEach(b => b.classList.add('active'));
@@ -168,7 +164,6 @@ function switchView(viewId) {
         document.querySelectorAll('[data-page="lenta"]').forEach(b => b.classList.add('active'));
         loadLenta();
     } else if (viewId === 'chat-view') {
-        // чат открывается без подсветки конкретной кнопки (оставляем chat активной)
         document.querySelectorAll('[data-page="chat"]').forEach(b => b.classList.add('active'));
     }
 }
