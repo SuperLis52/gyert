@@ -8,40 +8,36 @@
     <script src="/static/js/socket.io.min.js"></script>
 </head>
 <body>
-    <div id="app" class="theme-dark">
-        <!-- Боковая панель (десктоп) -->
+    <div id="app" class="theme-gyert">
         <aside class="sidebar">
             <div class="logo">
-                <img src="/static/logo-dark.png" alt="Gyert" id="logo-img" class="logo-img">
+                <img src="/static/gyert_logo.png" alt="Gyert" id="logo-img" class="logo-img">
             </div>
             <nav class="nav">
                 <button class="nav-btn active" data-page="chat">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    <span>Чаты</span>
+                    <span data-lang="chats">Чаты</span>
                 </button>
                 <button class="nav-btn" data-page="settings">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-                    <span>Настройки</span>
+                    <span data-lang="settings">Настройки</span>
                 </button>
                 <button class="nav-btn" data-page="lenta">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    <span>Lenta</span>
+                    <span data-lang="lenta">Lenta</span>
                 </button>
             </nav>
         </aside>
 
-        <!-- Основной контент -->
         <main class="main-content">
-            <!-- Список чатов -->
             <section id="chat-list-view" class="view active">
                 <div class="chat-list-header">
-                    <h2>Чаты</h2>
+                    <h2 data-lang="chats">Чаты</h2>
                     <button class="icon-btn" id="newChatBtn" title="Новый чат">+</button>
                 </div>
                 <div class="chat-list" id="chatList"></div>
             </section>
 
-            <!-- Окно чата -->
             <section id="chat-view" class="view">
                 <div class="chat-header">
                     <button class="back-btn" id="backToChats">← Назад</button>
@@ -54,26 +50,24 @@
                 </div>
             </section>
 
-            <!-- Lenta -->
             <section id="lenta-view" class="view">
-                <div class="lenta-header"><h2>Lenta</h2></div>
+                <div class="lenta-header"><h2 data-lang="lenta">Lenta</h2></div>
                 <div class="lenta-container" id="lentaContainer"></div>
             </section>
 
-            <!-- Настройки -->
             <section id="settings-view" class="view">
                 <div class="settings-panel">
-                    <h2>Настройки</h2>
-                    <div class="setting-item"><span>Язык</span><select id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
-                    <div class="setting-item"><span>Тема</span><select id="themeSelect"><option value="dark">Тёмная</option><option value="light">Светлая</option><option value="blue">Голубая</option></select></div>
-                    <div class="setting-item"><span>Liquid Glass</span><label class="switch"><input type="checkbox" id="glassCheckbox"><span class="slider round"></span></label></div>
-                    <div class="setting-item"><span>Премиум</span><button class="btn-small" id="premiumBtn">Подключить</button></div>
-                    <div class="setting-item"><span>Аккаунт</span><button class="btn-small" id="logoutBtn">Выйти</button></div>
+                    <h2 data-lang="settings">Настройки</h2>
+                    <div class="setting-item"><span data-lang="lang">Язык</span><select id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
+                    <div class="setting-item"><span data-lang="theme">Тема</span><select id="themeSelect"><option value="gyert">Gyert (умолч.)</option><option value="dark">Тёмная</option><option value="light">Светлая</option></select></div>
+                    <div class="setting-item"><span data-lang="glass">Liquid Glass</span><label class="switch"><input type="checkbox" id="glassCheckbox"><span class="slider round"></span></label></div>
+                    <div class="setting-item"><span data-lang="premium">Премиум</span><button class="btn-small" id="premiumBtn">Подключить</button></div>
+                    <div class="setting-item"><span data-lang="account">Аккаунт</span><button class="btn-small" id="switchAccountBtn">Сменить аккаунт</button></div>
+                    <div class="setting-item"><span data-lang="logout">Выйти</span><button class="btn-small" id="logoutBtn">Выйти</button></div>
                 </div>
             </section>
         </main>
 
-        <!-- Мобильная нижняя панель -->
         <nav class="mobile-nav" id="mobileNav">
             <button class="mobile-nav-btn active" data-page="chat"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>
             <button class="mobile-nav-btn" data-page="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
@@ -81,18 +75,18 @@
         </nav>
     </div>
 
-    <!-- Модальное окно регистрации -->
-    <div id="registerModal" class="modal" style="display:none">
+    <!-- Модальное окно создания чата/группы/канала -->
+    <div id="createModal" class="modal" style="display:none">
         <div class="modal-content">
-            <h2>Регистрация</h2>
-            <p>Выберите способ:</p>
-            <button class="btn-full" onclick="location.href='/register-tg'">Через Telegram</button>
-            <button class="btn-full" onclick="alert('Ручная регистрация скоро будет доступна')">Вручную</button>
-            <button class="btn-close" onclick="document.getElementById('registerModal').style.display='none'">Отмена</button>
+            <h3>Создать</h3>
+            <button class="btn-full" onclick="createChat()">💬 Чат</button>
+            <button class="btn-full" onclick="createGroup()">👥 Группа</button>
+            <button class="btn-full" onclick="createChannel()">📢 Канал</button>
+            <button class="btn-close" onclick="document.getElementById('createModal').style.display='none'">Отмена</button>
         </div>
     </div>
 
     <div id="toast" class="toast"></div>
-    <script src="/static/js/app.js?v=9"></script>
+    <script src="/static/js/app.js?v=10"></script>
 </body>
 </html>
