@@ -60,7 +60,8 @@
                     <h2 data-lang="settings">Настройки</h2>
                     <div class="setting-item"><span data-lang="lang">Язык</span><select id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
                     <div class="setting-item"><span data-lang="theme">Тема</span><select id="themeSelect"><option value="gyert">Gyert (умолч.)</option><option value="dark">Тёмная</option><option value="light">Светлая</option></select></div>
-                    <div class="setting-item"><span data-lang="glass">Liquid Glass</span><label class="switch"><input type="checkbox" id="glassCheckbox"><span class="slider round"></span></label></div>
+                    <div class="setting-item"><span>Никнейм</span><button class="btn-small" id="changeNickBtn">Сменить (раз в 24ч)</button></div>
+                    <div class="setting-item"><span>Юзернейм</span><button class="btn-small" id="changeUsernameBtn">Сменить (раз в 30 дн.)</button></div>
                     <div class="setting-item"><span data-lang="premium">Премиум</span><button class="btn-small" id="premiumBtn">Подключить</button></div>
                     <div class="setting-item"><span data-lang="account">Аккаунт</span><button class="btn-small" id="switchAccountBtn">Сменить аккаунт</button></div>
                     <div class="setting-item"><span data-lang="logout">Выйти</span><button class="btn-small" id="logoutBtn">Выйти</button></div>
@@ -75,7 +76,7 @@
         </nav>
     </div>
 
-    <!-- Модальное окно создания чата/группы/канала -->
+    <!-- Модалка создания чата/группы/канала -->
     <div id="createModal" class="modal" style="display:none">
         <div class="modal-content">
             <h3>Создать</h3>
@@ -87,6 +88,6 @@
     </div>
 
     <div id="toast" class="toast"></div>
-    <script src="/static/js/app.js?v=10"></script>
+    <script src="/static/js/app.js?v=12"></script>
 </body>
 </html>
