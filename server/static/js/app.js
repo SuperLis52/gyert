@@ -2,19 +2,17 @@
 let currentUser = null;
 let chats = [];
 let currentChatId = null;
-let currentTheme = localStorage.getItem('theme') || 'light-blue';
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUser();
     if (!currentUser) return;
     socket.emit('join', { username: currentUser.username });
     loadChats();
-    loadReels();
+    bindNavigation();   // <-- исправлено
     setupTheme();
-    setupNavigation();
+    bindChatInput();
     socket.on('new_message', handleNewMessage);
-    socket.on('notification', showNotification);
-    socket.on('user_status', updateUserStatus);
+    socket.on('notification', showToast);
 });
 
 async function loadUser() {
@@ -22,8 +20,6 @@ async function loadUser() {
         const res = await fetch('/api/me');
         if (!res.ok) throw new Error('Not authenticated');
         currentUser = await res.json();
-        document.getElementById('user-name').textContent = currentUser.display_name;
-        document.getElementById('user-avatar').src = currentUser.avatar_url || '/static/logo-default.png';
     } catch {
         window.location.href = '/login';
     }
@@ -37,15 +33,22 @@ async function loadChats() {
 }
 
 function renderChatList() {
-    const container = document.getElementById('chat-list');
+    const container = document.getElementById('chatList');
+    if (!container) return;
     container.innerHTML = chats.map(c => {
-        const name = c.name || 'Chat';
+        const name = c.other_user ? c.other_user.display_name : (c.name || 'Chat');
+        const avatarChar = (c.other_user ? c.other_user.display_name : (c.name || 'C'))[0].toUpperCase();
         const lastMsg = c.last_message ? c.last_message.content : '';
+        const time = c.last_message ? new Date(c.last_message.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
         const unread = c.unread_count || 0;
-        return `<div class="chat-item ${c.id === currentChatId ? 'active' : ''}" data-id="${c.id}">
-            <div class="chat-name">${name}</div>
-            <div class="chat-preview">${lastMsg}</div>
-            ${unread > 0 ? `<span class="badge">${unread}</span>` : ''}
+        return `<div class="chat-item" data-id="${c.id}">
+            <div class="chat-avatar">${avatarChar}</div>
+            <div class="chat-info">
+                <div class="chat-name">${name}</div>
+                <div class="chat-last-message">${lastMsg}</div>
+            </div>
+            <div class="chat-time">${time}</div>
+            ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
         </div>`;
     }).join('');
     document.querySelectorAll('.chat-item').forEach(el => {
@@ -55,24 +58,22 @@ function renderChatList() {
 
 function openChat(chatId) {
     currentChatId = chatId;
-    socket.emit('join_chat', { chat_id: chatId });
+    switchView('chat-view');
+    const chat = chats.find(c => c.id == chatId);
+    if (chat) {
+        document.getElementById('chatTitle').textContent = chat.other_user ? chat.other_user.display_name : (chat.name || 'Chat');
+    }
     fetch(`/api/chats/${chatId}/messages`).then(r => r.json()).then(data => {
-        const window = document.getElementById('chat-window');
-        window.innerHTML = `
-            <div class="messages" id="messages">${data.messages.map(m => renderMessage(m)).join('')}</div>
-            <div class="input-area">
-                <input type="text" id="msg-input" placeholder="Сообщение...">
-                <button onclick="sendMessage()">Отправить</button>
-            </div>
-        `;
-        document.getElementById('msg-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+        const container = document.getElementById('messages');
+        container.innerHTML = data.messages.map(m => renderMessage(m)).join('');
+        container.scrollTop = container.scrollHeight;
     });
-    renderChatList();
+    socket.emit('join_chat', { chat_id: chatId });
 }
 
 function sendMessage() {
-    const input = document.getElementById('msg-input');
-    if (!input.value.trim()) return;
+    const input = document.getElementById('msgInput');
+    if (!input.value.trim() || !currentChatId) return;
     socket.emit('send_message', { chat_id: currentChatId, content: input.value.trim(), type: 'text' });
     input.value = '';
 }
@@ -90,65 +91,135 @@ function handleNewMessage(msg) {
 
 function renderMessage(msg) {
     const isMine = msg.sender_id === currentUser.id;
+    const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     return `<div class="message ${isMine ? 'mine' : ''}">
         <div class="bubble">${msg.content}</div>
-        <div class="time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+        <div class="time">${time}</div>
     </div>`;
 }
 
-function showNotification(notif) {
+function showToast(data) {
     const toast = document.getElementById('toast');
-    toast.textContent = notif.text;
+    toast.textContent = data.text || data;
     toast.style.display = 'block';
     setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-function updateUserStatus(data) {
-    // можно обновить индикатор в чате
+// ========== НАВИГАЦИЯ ==========
+function bindNavigation() {
+    // Кнопки боковой панели
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const page = e.currentTarget.dataset.page;
+            if (page === 'chat') switchView('chat-list-view');
+            else if (page === 'settings') switchView('settings-view');
+            else if (page === 'lenta') switchView('lenta-view');
+        });
+    });
+
+    // Мобильная нижняя панель
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const page = e.currentTarget.dataset.page;
+            if (page === 'chat') switchView('chat-list-view');
+            else if (page === 'settings') switchView('settings-view');
+            else if (page === 'lenta') switchView('lenta-view');
+        });
+    });
+
+    // Кнопка "Назад" в чате
+    const backBtn = document.getElementById('backToChats');
+    if (backBtn) backBtn.addEventListener('click', () => switchView('chat-list-view'));
+
+    // Новая кнопка создания чата (заглушка)
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) newChatBtn.addEventListener('click', () => alert('Новый чат скоро появится'));
+
+    // Кнопка выхода
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        await fetch('/api/logout', {method:'POST'});
+        window.location.href = '/login';
+    });
+
+    // Кнопка "Премиум"
+    const premiumBtn = document.getElementById('premiumBtn');
+    if (premiumBtn) premiumBtn.addEventListener('click', () => alert('Премиум подписка будет доступна позже'));
+
+    // Кнопка отправки сообщения
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 }
 
-async function loadReels() {
+function switchView(viewId) {
+    // Скрываем все views
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    // Показываем нужный
+    const target = document.getElementById(viewId);
+    if (target) target.classList.add('active');
+
+    // Обновляем активные классы в навигации
+    document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    if (viewId === 'chat-list-view') {
+        document.querySelectorAll('[data-page="chat"]').forEach(b => b.classList.add('active'));
+    } else if (viewId === 'settings-view') {
+        document.querySelectorAll('[data-page="settings"]').forEach(b => b.classList.add('active'));
+    } else if (viewId === 'lenta-view') {
+        document.querySelectorAll('[data-page="lenta"]').forEach(b => b.classList.add('active'));
+        loadLenta();
+    } else if (viewId === 'chat-view') {
+        // чат открывается без подсветки конкретной кнопки (оставляем chat активной)
+        document.querySelectorAll('[data-page="chat"]').forEach(b => b.classList.add('active'));
+    }
+}
+
+async function loadLenta() {
     const res = await fetch('/api/reels/all');
     const posts = await res.json();
-    const container = document.getElementById('reels-container');
+    const container = document.getElementById('lentaContainer');
     container.innerHTML = posts.map(p => {
-        const media = p.media_url ? (p.media_type === 'video' ? `<video src="${p.media_url}" controls></video>` : `<img src="${p.media_url}">`) : '';
-        return `<div class="reel-card">
-            ${media}
-            <div class="reel-content">${p.content || ''}</div>
-        </div>`;
+        const media = p.media_url ? (p.media_type === 'video' ? `<video src="${p.media_url}" controls loop muted autoplay></video>` : `<img src="${p.media_url}">`) : '';
+        return `<div class="reel-card">${media}<div class="reel-caption">${p.content || ''}</div></div>`;
     }).join('');
 }
 
-function setupTheme() {
-    document.body.className = `theme-${currentTheme}`;
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.theme === currentTheme);
-        btn.addEventListener('click', () => {
-            currentTheme = btn.dataset.theme;
-            document.body.className = `theme-${currentTheme}`;
-            localStorage.setItem('theme', currentTheme);
-            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const logo = document.getElementById('logo-img');
-            if (logo) {
-                if (currentTheme === 'dark') logo.src = '/static/logo-dark.png';
-                else if (currentTheme === 'light') logo.src = '/static/logo-light.png';
-                else logo.src = '/static/logo-default.png';
-            }
+function bindChatInput() {
+    const input = document.getElementById('msgInput');
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
         });
-    });
+    }
 }
 
-function setupNavigation() {
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            if (item.dataset.page === 'settings') {
-                alert('Настройки будут позже');
-            }
+function setupTheme() {
+    const saved = localStorage.getItem('gyert_theme') || 'dark';
+    applyTheme(saved);
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.value = saved;
+        themeSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            applyTheme(val);
+            localStorage.setItem('gyert_theme', val);
         });
-    });
+    }
+
+    const glassCheck = document.getElementById('glassCheckbox');
+    if (glassCheck) {
+        const glass = localStorage.getItem('gyert_glass') === 'true';
+        glassCheck.checked = glass;
+        document.body.classList.toggle('glass', glass);
+        glassCheck.addEventListener('change', function() {
+            localStorage.setItem('gyert_glass', this.checked);
+        });
+    }
+}
+
+function applyTheme(theme) {
+    document.body.className = `theme-${theme}`;
+    const logo = document.getElementById('logo-img');
+    if (logo) {
+        logo.src = `/static/logo-${theme === 'dark' ? 'dark' : 'light'}.png`;
+    }
 }
