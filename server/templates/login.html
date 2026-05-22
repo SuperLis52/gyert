@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -157,7 +157,7 @@
                 const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value})});
                 const d = await r.json();
-                if (d.success) window.location.href = '/feed';
+                if (d.success) window.location.href = '/chat';
                 else err.textContent = d.error || 'Ошибка';
             } catch(x) {
                 err.textContent = 'Ошибка соединения';
